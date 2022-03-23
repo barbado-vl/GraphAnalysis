@@ -6,16 +6,17 @@
         xmlns:local="clr-namespace:GraphAnalysis"
         xmlns:VM="clr-namespace:GraphAnalysis.VM"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="{Binding Title}" 
+        Height="450" Width="800">
+    <Window.DataContext>
+        <VM:MainWindowVM/>
+    </Window.DataContext>
     <Window.InputBindings>
         <KeyBinding Key="V" Modifiers="Ctrl" Command="ApplicationCommands.Paste" CommandTarget="{Binding ElementName=myCanvas}"/>
     </Window.InputBindings>
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Paste" Executed="PasteCmdExecuted"/>
     </Window.CommandBindings>
-    <Window.Resources>
-        <VM:MainWindowVM x:Key="MainWindowVM" />
-    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
@@ -30,7 +31,7 @@
         <WrapPanel Grid.Row="0" Grid.Column="0" Width="auto" HorizontalAlignment="Left" VerticalAlignment="Center">
             <Menu Height="20" VerticalAlignment="Top">
                 <MenuItem Header="File">
-                    <MenuItem Header="New" Click="MenuItemNew_Click" />
+                    <MenuItem Header="New" Command="{Binding OpenNewCommand}" />
                     <MenuItem Header="Clear"/>
                     <MenuItem Header="Save"/>
                     <MenuItem Header="Load"/>
@@ -39,12 +40,30 @@
         </WrapPanel>
         <GridSplitter Grid.Column="1" Grid.Row="0" ShowsPreview="False" Width="3" HorizontalAlignment="Center" />
         <WrapPanel Grid.Column="2" Grid.Row="0" Width="auto" HorizontalAlignment="Left" VerticalAlignment="Center">
-            <Button Content="FC" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Click="ClickFindContours"/>
+            <Button Content="FC" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Command="{Binding FindContoursCommand}"/>
+            <Button Content="Peaks" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding CalculatePeaksCommand}"/>
+            <Button Content="ResZ" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ResetZoomBorderCommand}"/>
         </WrapPanel>
         <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" ShowsPreview="False" Height="3" HorizontalAlignment="Stretch"/>
         <local:ZoomBorder x:Name="brdrOne" Grid.Row="2" Grid.ColumnSpan="3" ClipToBounds="True" >
-            <Canvas x:Name="myCanvas">
+            <!--<ItemsControl ItemsSource="{Binding Path=Nodes}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas x:Name="myCanvas" Width="{Binding WidthCanvas}" Height="{Binding HeightCanvas}" Background="{Binding BGImage, UpdateSourceTrigger=PropertyChanged}"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Canvas.Left" Value="{Binding Path=XPos}" />
+                        <Setter Property="Canvas.Top" Value="{Binding Path=YPos}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+            </ItemsControl>-->
 
+            <Canvas x:Name="myCanvas" Width="{Binding WidthCanvas}" Height="{Binding HeightCanvas}">
+                <Canvas.Background>
+                    <ImageBrush ImageSource = "{Binding BGImage, UpdateSourceTrigger=PropertyChanged}"/>
+                </Canvas.Background >
             </Canvas>
         </local:ZoomBorder>
 
