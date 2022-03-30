@@ -47,3 +47,9 @@ dotnet_diagnostic.IDE0054.severity = suggestion
 
 # IDE0059: Ненужное присваивание значения
 dotnet_diagnostic.IDE0059.severity = silent
+
+# IDE0047: Удалить ненужные круглые скобки
+dotnet_diagnostic.IDE0047.severity = suggestion
+
+# IDE0056: Использовать оператор индекса
+dotnet_diagnostic.IDE0056.severity = suggestion

@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using System.Windows;
 
@@ -6,110 +7,86 @@ namespace GraphAnalysis.DataModel
 {
     public class Peak
     {
-        /// <summary> Peaks made from candles (simple peak) /// </summary>
-        public Peak(string direction, List<Candle> vectorUp, List<Candle> vectorDown)
+        /// <summary>  /// </summary>
+        public Peak(string direction, List<Candle> mass)
         {
+            Direction = direction;
+            Mass = mass.Count;
+            Id = "peak_" + Mass.ToString();
+
             if (direction == "up")
             {
-                Tsn = (vectorUp[0].id, vectorUp[0].MinPoint);
-                Tsp = (vectorDown[0].id, vectorDown[0].MaxPoint);
-                Tsk = (vectorDown[^1].id, vectorDown[^1].MinPoint);
-
-                UpdateAge(vectorUp, 0);
-                UpdateAge(vectorDown, 1);
+                TextPoint = CalculateTextPoint(mass[0].MinPoint, mass[^1].MinPoint, Direction);
+                CutOffPoint = mass[0].MinPoint;
             }
-            else // direction == "down"
+            else
             {
-                Tsn = (vectorDown[0].id, vectorDown[0].MaxPoint);
-                Tsp = (vectorUp[0].id, vectorUp[0].MinPoint);
-                Tsk = (vectorUp[^1].id, vectorUp[^1].MaxPoint);
-
-                UpdateAge(vectorDown, 0);
-                UpdateAge(vectorUp, 1);
+                TextPoint = CalculateTextPoint(mass[0].MaxPoint, mass[^1].MaxPoint, Direction);
+                CutOffPoint = mass[0].MaxPoint;
             }
 
-            UpdateMass(Direction);
-            State = 2;
-            Direction = direction;
-            Id = "peak_" + Mass.ToString();
+            int indexTsp;
+            (Tsp, indexTsp) = FindTsp(Direction, mass);
+
+            CandlesId.Add(mass[0].id);
+            CandlesId.Add(mass[indexTsp].id);
         }
 
-        /// <summary> Peaks made from peaks /// </summary>
-        public Peak(string direction)
+        /// <summary> НА ПОТОМ      Ручное добавление /// </summary>
+        public Peak()
         {
-            UpdateMass(Direction);
-            Id = "peak_" + Mass.ToString();
+
         }
 
 
         public string Direction { get; }
-
-        public List<Candle> Age = new();
         public int Mass { get; set; }
         public string Id { get; set; }
 
-        public (string CandleId, Point ExtremPpoint) Tsn { get; }
-        public (string CandleId, Point ExtremPpoint) Tsp { get; set; }
-        public (string CandleId, Point ExtremPpoint) Tsk { get; set; }
+        public Point TextPoint { get; set; }
+        public Point CutOffPoint { get; set; }
+        public Point Tsp { get; set; }
+
+        public List<string> CandlesId = new();
 
 
-        public int State { get; set; }
-        public List<(string CandleId, Point ExtremPpoint)> TslAndDtp { get; set; }
-
-
-        public void UpdateAge(List<Candle> candles, int start)
+        private Point CalculateTextPoint(Point start, Point wall, string direction)
         {
-            for (int n = start; n < candles.Count; n++)
-            {
-                Age.Add(candles[n]);
-            }
+            Point textpoint = new();
+
+            double a, b;
+            if (start.X > wall.X) { a = start.X; b = wall.X; }
+            else { a = wall.X; b = start.X; }
+
+            textpoint.Y = direction == "up" ? start.Y : start.Y - 20;
+            textpoint.X = a - ((a - b) / 2);   //     при В лево от меньшего отнимает ... назад уходим
+
+            return textpoint;
         }
 
-        public void UpdateMass(string direction)
+        private (Point, int) FindTsp(string direction, List<Candle> candles)
         {
-            Mass = 0;
+            Point tsp;
+            int x = 0;
 
             if (direction == "up")
             {
-                if (Tsn.ExtremPpoint.Y >= Tsk.ExtremPpoint.Y)
+                tsp = candles[0].MaxPoint;
+                for (int n = 1; n < candles.Count; n++)
                 {
-                    for (int n = Age.Count - 1; n >= 0; n--)
-                    {
-                        if (Age[n].MinPoint.Y <= Tsk.ExtremPpoint.Y) { Mass++; }
-                        else { break; }
-                    }
-                }
-                else // Tsn.ExtremPpoint.Y < Tsk.ExtremPpoint.Y
-                {
-                    State = 1;
-                    for (int n = 0; n < Age.Count; n++)
-                    {
-                        if (Age[n].MinPoint.Y <= Tsn.ExtremPpoint.Y) { Mass++; }
-                        else { break; }
-                    }
+                    if (candles[n].MaxPoint.Y < tsp.Y) { tsp = candles[n].MaxPoint; x = n; }
                 }
             }
-            else // direction == "down"
+            else
             {
-                if (Tsn.ExtremPpoint.Y <= Tsk.ExtremPpoint.Y)
+                tsp = candles[0].MinPoint;
+                for (int n = 1; n < candles.Count; n++)
                 {
-                    for (int n = Age.Count - 1; n >= 0; n--)
-                    {
-                        if (Age[n].MaxPoint.Y >= Tsk.ExtremPpoint.Y) { Mass++; }
-                        else { break; }
-                    }
-                }
-                else // Tsn.ExtremPpoint.Y < Tsk.ExtremPpoint.Y
-                {
-                    State = 1;
-                    for (int n = 0; n < Age.Count; n++)
-                    {
-                        if (Age[n].MaxPoint.Y >= Tsn.ExtremPpoint.Y) { Mass++; }
-                        else { break; }
-                    }
+                    if (candles[n].MinPoint.Y > tsp.Y) { tsp = candles[n].MinPoint; x = n; }
                 }
             }
-        }
 
+            return (tsp, x);
+        }
     }
 }

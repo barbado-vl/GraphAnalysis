@@ -35,10 +35,10 @@ namespace GraphAnalysis.DataModel
         }
 
         private Point _MaxPoint;
-        public Point MaxPoint 
+        public Point MaxPoint
         {
             get { return _MaxPoint; }
-            set { _MaxPoint = value; } 
+            set => _MaxPoint = value;
         }
 
         private Point _MinPoint;

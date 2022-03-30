@@ -2,250 +2,144 @@
 using System.Collections.Generic;
 using System.Linq;
 
-
 namespace GraphAnalysis.VM
 {
-
-    /// <summary> Calculation peaks </summary>
-    /// Peak consist from two movement, vector up and vector down.
-    /// There are simple peaks from line or Japanese candlesticks on the chart.
-    /// There are complex peaks, the vectors of which consist of simple peaks, on the chart. 
-    /// Input data is Japanese candlesticks that i get by using emguCV find contours.
-    /// 
-    /// (??? method) The first step is to compare candlestick extremes to get simple vectors.
-    /// 
-    /// 
-    /// (ArrangementVectors method) The second step is consist from two thing. 
-    /// Fist thing is is to separate the appearance of a new vector, which gives a new peak, and the update of the current peak parameters.
-    /// Secnd thing knowing the direction of the last vector and the location of the points of the vectors get the peak and its parameters.
-    /// ......... Third step ...............
-    /// 
     public class CalculatePeaks
     {
         public List<Peak> Peaks = new();
+        public int N;                                     // НАДО передавать из VM
 
-        public CalculatePeaks(List<Candle> candles)
+        /// <summary> Ищем точки бифуркации
+        /// Собираем массу (свечки) вокруг точки бифуркации (выбраной свечки) 
+        /// Смотрим когда Max меньше чем у выбраной свечки, Min больше, в лево и в право
+        /// Операторы сравнения взяты с учетом того, что сравниваем точки координат Canvas
+        /// 4 цикла -- в ПРАВО по Max и Min, потом в ЛЕВО по Max и Min /// </summary>
+        public CalculatePeaks(List<Candle> candles, int i)
         {
+            N = i;
 
-            CandlesStep(candles);
-        }
+            List<Candle> UpRightBranch = new();
+            List<Candle> UpLeftBranch = new();
+            List<Candle> DownRightBranch = new();
+            List<Candle> DownLeftBranch = new();
 
-
-        private void CandlesStep(List<Candle> Candles)
-        {
-            List<Candle> VectorUp = new();
-            List<Candle> VectorDown = new();
-
-            string lastVector = "0";
-
-            for (int n = 0; n + 1 < Candles.Count; n++)
+            for (int n = N - 1; n < candles.Count; n++)
             {
-                /// <summary> A combination extremum of candles /// </summary>
-                if (Candles[n].MaxPoint.Y < Candles[n + 1].MaxPoint.Y & Candles[n].MinPoint.Y < Candles[n + 1].MinPoint.Y)
+                UpRightBranch.Clear(); UpLeftBranch.Clear(); DownRightBranch.Clear(); DownLeftBranch.Clear();
+                UpRightBranch.Add(candles[n]); UpLeftBranch.Add(candles[n]); DownRightBranch.Add(candles[n]); DownLeftBranch.Add(candles[n]);
+
+                for (int x = n + 1; x < candles.Count; x++)
                 {
-                    switch (lastVector)
-                    {
-                        case "0":
-                            VectorDown.Add(Candles[n]); VectorDown.Add(Candles[n + 1]);
-                            lastVector = "down";
-                            break;
-                        case "down":
-                            VectorDown.Add(Candles[n + 1]);
-                            break;
-                        case "up":
-                            VectorDown.Clear();
-                            VectorDown.Add(Candles[n]); VectorDown.Add(Candles[n + 1]);
-                            lastVector = "down";
-                            break;
-                    }
-                    if (VectorUp.Any())
-                    {
-                        CreateOrUpdateSimplePeak("up", VectorUp, VectorDown);
-                    }
+                    if (candles[n].MaxPoint.Y <= candles[x].MaxPoint.Y) { UpRightBranch.Add(candles[x]); }
+                    else { UpRightBranch.Add(candles[x]); break; }
+                }
+                for (int x = n + 1; x < candles.Count; x++)
+                {
+                    if (candles[n].MinPoint.Y >= candles[x].MinPoint.Y) { DownRightBranch.Add(candles[x]); }
+                    else { DownRightBranch.Add(candles[x]); break; }
+                }
+                for (int x = n - 1; x >= 0; x--)
+                {
+                    if (candles[n].MaxPoint.Y <= candles[x].MaxPoint.Y) { UpLeftBranch.Add(candles[x]); }
+                    else { UpLeftBranch.Add(candles[x]); break; }
+                }
+                for (int x = n - 1; x >= 0; x--)
+                {
+                    if (candles[n].MinPoint.Y >= candles[x].MinPoint.Y) { DownLeftBranch.Add(candles[x]); }
+                    else { DownLeftBranch.Add(candles[x]); break; }
                 }
 
-                /// <summary> B combination extremum of candles /// </summary>
-                else if (Candles[n].MaxPoint.Y > Candles[n + 1].MaxPoint.Y & Candles[n].MinPoint.Y > Candles[n + 1].MinPoint.Y)
+                /// <summary> Условия фильтра для точки бифуркации UP и DOWN  /// </summary>
+                if (UpRightBranch.Count >= N && UpLeftBranch.Count >= N)
                 {
-                    switch (lastVector)
-                    {
-                        case "0":
-                            VectorUp.Add(Candles[n]); VectorUp.Add(Candles[n + 1]);
-                            lastVector = "up";
-                            break;
-                        case "down":
-                            VectorUp.Clear();
-                            VectorUp.Add(Candles[n]); VectorUp.Add(Candles[n + 1]);
-                            lastVector = "up";
-                            break;
-                        case "up":
-                            VectorUp.Add(Candles[n + 1]);
-                            break;
-                    }
-                    if (VectorDown.Any())
-                    {
-                        CreateOrUpdateSimplePeak("down", VectorUp, VectorDown);
-                    }
+                    ConditionByCreateDownPeak(UpRightBranch, UpLeftBranch, candles[n]);
+                    ConditionByCreateDownPeak(UpLeftBranch, UpRightBranch, candles[n]);
+                }
+                else if (UpLeftBranch.Count >= N && UpRightBranch[^1] == candles[^1] &&
+                         (UpRightBranch.Count == 1 || UpRightBranch[^1].MaxPoint.Y > UpRightBranch[^2].MaxPoint.Y))
+                {
+                    UpRightBranch.Clear();
+                    ConditionByCreateDownPeak(UpLeftBranch, UpRightBranch, candles[n]);
                 }
 
-                /// <summary> C-D-E-F combination extremum of candles, plus f1 f2 f3 f4 /// </summary>
-                else
+                if (DownRightBranch.Count >= N && DownLeftBranch.Count >= N)
                 {
-                    switch (lastVector)
-                    {
-                        case "0":                                                       // 
-                            VectorUp.Add(Candles[n]);
-                            VectorDown.Add(Candles[n]); VectorDown.Add(Candles[n + 1]);
-
-                            CreateOrUpdateSimplePeak("up", VectorUp, VectorDown);
-
-                            VectorUp.Clear();
-                            VectorUp.Add(Candles[n + 1]);
-                            lastVector = "up";
-
-                            CreateOrUpdateSimplePeak("down", VectorUp, VectorDown);
-                            break;
-                        case "down":                                                   // 
-                            VectorUp.Clear();
-                            VectorUp.Add(Candles[n]); VectorUp.Add(Candles[n + 1]);
-
-                            CreateOrUpdateSimplePeak("down", VectorUp, VectorDown);
-
-                            VectorDown.Clear();
-                            VectorDown.Add(Candles[n + 1]);
-                            lastVector = "down";
-
-                            CreateOrUpdateSimplePeak("up", VectorUp, VectorDown);
-                            break;
-                        case "up":                                                     // 
-                            VectorDown.Clear();
-                            VectorDown.Add(Candles[n]); VectorDown.Add(Candles[n + 1]);
-
-                            CreateOrUpdateSimplePeak("up", VectorUp, VectorDown);
-
-                            VectorUp.Clear();
-                            VectorUp.Add(Candles[n + 1]);
-                            lastVector = "up";
-
-                            CreateOrUpdateSimplePeak("down", VectorUp, VectorDown);
-                            break;
-                    }
+                    ConditionByCreateUpPeak(DownRightBranch, DownLeftBranch, candles[n]);
+                    ConditionByCreateUpPeak(DownLeftBranch, DownRightBranch, candles[n]);
+                }
+                else if (DownLeftBranch.Count >= N && DownRightBranch[^1] == candles[^1] &&
+                         (DownRightBranch.Count == 1 || DownRightBranch[^1].MinPoint.Y < DownRightBranch[^2].MinPoint.Y))
+                {
+                    DownRightBranch.Clear();
+                    ConditionByCreateUpPeak(DownLeftBranch, DownRightBranch, candles[n]);
                 }
             }
         }
 
-        private void CreateOrUpdateSimplePeak(string direction, List<Candle> vectorUp, List<Candle> vectorDown)
+
+        private void ConditionByCreateDownPeak(List<Candle> firstbranch, List<Candle> secondtbranch, Candle currentcandle)
         {
-            if (Peaks.Any() && Peaks[^1].Direction == direction)
+            YQualsY(firstbranch, "down");
+
+            if (firstbranch[^1].MaxPoint.Y <= currentcandle.MaxPoint.Y &&
+                (firstbranch.Count < secondtbranch.Count * 2 || secondtbranch.Count == 0))
             {
-                if (direction == "up")
-                {
-                    Peaks[^1].Tsk = (vectorDown[^1].id, vectorDown[^1].MinPoint);
-                    Peaks[^1].UpdateAge(vectorDown, 1);
-                }
-                else // direction == "down"
-                {
-                    Peaks[^1].Tsk = (vectorUp[^1].id, vectorUp[^1].MaxPoint);
-                    Peaks[^1].UpdateAge(vectorUp, 1);
-                }
+                Peaks.Add(new Peak("down", firstbranch));
+            }
+        }
+        private void ConditionByCreateUpPeak(List<Candle> firstbranch, List<Candle> secondtbranch, Candle currentcandle)
+        {
+            YQualsY(firstbranch, "up");
 
-                if (Peaks[^1].State == 2)
-                {
-                    Peaks[^1].UpdateMass(direction);
-                }
+            if (firstbranch[^1].MinPoint.Y >= currentcandle.MinPoint.Y &&
+                (firstbranch.Count < secondtbranch.Count * 2 || secondtbranch.Count == 0))
+            {
+                Peaks.Add(new Peak("up", firstbranch));
+            }
+        }
 
-                Peaks[^1].Id = "peak" + Peaks[^1].Mass.ToString();
+
+        /// <summary> Проверка на Y = Y так это тоже точки отсекающие массу
+        /// Разделяем на направления, т.к. надо обращаться к Max или Min точкам и выбирать оператор сравнения < или >
+        /// Собираем индексы у списка свечек, для которых выполняется условие "Y=Y", включая первую, как дающую 1-ый Y, плюс крайняя со свои условем Y крайней
+        /// Перебираем индексы свечек и проверяем условие на >=N ... Первую часть условия вынес в условие сбора индексов свечек. Втоая часть далее.
+        /// Если условие второй части >=N выполняется -- отбираем свечки внутри диапазона индексов в новый список и создаем пик. </summary>
+        private void YQualsY(List<Candle> tempcandles, string direction)
+        {
+            List<int> numbers = new() { 0 };
+
+            if (direction == "down") // как у пика
+            {
+                for (int n = N - 1; n < tempcandles.Count; n++)
+                {
+                    if (tempcandles[0].MaxPoint.Y == tempcandles[n].MaxPoint.Y) { numbers.Add(n); }
+                }
+                if (tempcandles[0].MaxPoint.Y > tempcandles[^1].MaxPoint.Y && numbers.Count > 1) { numbers.Add(tempcandles.Count - 1); }
+
             }
             else
             {
-                Peaks.Add(new Peak(direction, vectorUp, vectorDown));
+                for (int n = N - 1; n < tempcandles.Count; n++)
+                {
+                    if (tempcandles[0].MinPoint.Y == tempcandles[n].MinPoint.Y) { numbers.Add(n); }
+                }
+                if (tempcandles[0].MinPoint.Y < tempcandles[^1].MinPoint.Y && numbers.Count > 1) { numbers.Add(tempcandles.Count - 1); }
             }
 
-            BypassingPeaks();
-        }
-
-        private void BypassingPeaks()
-        {
-            for (int N = Peaks.Count - 1; N > 0;)
+            if (numbers.Count > 1)
             {
-                N = PropogationOfChange(N);
-            }
-        }
-
-        private int PropogationOfChange(int N)
-        {
-            /// <summary> Ищем предыдущий активный пик того же направления, пока не дойдем до последнего Peaks[0]/// </summary>
-            int I = N - 1;
-            while (I != 0 || (Peaks[N].Direction != Peaks[I].Direction && Peaks[I].State != 0)) { I--; }
-
-            if (I == 0) { return 0; }
-
-            /// <summary> Тип изменения в зависимости от направление пика, которое подсказывает как сранивать точки /// </summary>
-            if (Peaks[N].Direction == "up")
-            {
-                /// <summary> Точки поровнялись, но пробоя нет /// </summary>
-                if (Peaks[N].Tsn.ExtremPpoint.Y == Peaks[N].Tsk.ExtremPpoint.Y)
+                for (int x = 1; x < numbers.Count - 1; x++)
                 {
-                    
-                    
-                    //while (I != 0 || (Peaks[N].Direction != Peaks[I].Direction && Peaks[I].State != 2)) { I--; }
-
-                    //if (I == 0) { return 0; }
-                    //else { UpdateDifficultPeak(N, I); return I; }
-
-
-
+                    if (numbers[x + 1] - numbers[x] >= N && numbers[x] - numbers[x - 1] >= N)
+                    {
+                        List<Candle> candles = new();
+                        for (int i = numbers[x]; i <= numbers[x + 1]; i++)
+                        {
+                            candles.Add(tempcandles[i]);
+                        }
+                        Peaks.Add(new Peak(direction, candles));
+                    }
                 }
-
-                /// <summary> Пробой пика Вверх по Tsn /// </summary>
-                else if (Peaks[N].Tsn.ExtremPpoint.Y < Peaks[N].Tsk.ExtremPpoint.Y)
-                {
-
-                }
-
-                /// <summary> Внутри /// </summary>
-                else
-                {
-
-                }
-
-                return 0; // потом убрать, когда условия заполню
-            }
-            else
-            {
-                if (Peaks[N].Tsn.ExtremPpoint.Y == Peaks[N].Tsk.ExtremPpoint.Y)
-                {
-
-                }
-                else if (Peaks[N].Tsn.ExtremPpoint.Y > Peaks[N].Tsk.ExtremPpoint.Y)
-                {
-
-                }
-                else // Peaks[N].Tsn.ExtremPpoint.Y < Peaks[N].Tsk.ExtremPpoint.Y
-                {
-
-                }
-
-                return 0; // потом убрать, когда условия заполню
-            }
-
-        }
-
-        private void UpdateDifficultPeak(int N, int I)
-        {
-            Peaks[I].Tsk = Peaks[N].Tsk;
-
-            List<Candle> tempList = new();
-            int n = Peaks[N].Age.Count - 1;
-            while (Peaks[N].Age[n] != Peaks[I].Age[^1])
-            {
-                tempList.Add(Peaks[N].Age[n]);
-            }
-            if (tempList.Any())
-            {
-                Peaks[I].UpdateAge(tempList, 0);
-                Peaks[I].UpdateMass(Peaks[I].Direction);
-                Peaks[I].Id = "peak" + Peaks[I].Mass.ToString();
             }
         }
     }

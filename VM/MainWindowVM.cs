@@ -6,11 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
@@ -47,7 +44,7 @@ namespace GraphAnalysis.VM
         private ImageSource _BGImage;
         public ImageSource BGImage
         {
-            get { return _BGImage; }
+            get => _BGImage;
             set
             {
                 _BGImage = value;
@@ -59,7 +56,7 @@ namespace GraphAnalysis.VM
         private double _WidthCanvas;
         public double WidthCanvas
         {
-            get { return _WidthCanvas; }
+            get => _WidthCanvas;
             set
             {
                 _WidthCanvas = value;
@@ -125,16 +122,21 @@ namespace GraphAnalysis.VM
         private bool CanFindContoursCommandExecute(object p) => true;
         private void OnFindContoursCommandExecuted(object p)
         {
-            Candles = FindContours.ContourToCandle(ImgFilename);
-
-            for (int x = 0; x < Candles.Count; x++)
+            if (ImgFilename != null)
             {
-                Candles[x].PContour.MouseLeftButtonDown += ClickChild;
-                Polygones.Add(Candles[x].PContour);
-                MW.myCanvas.Children.Add(Candles[x].PContour);
-            }
-            
+                Candles = FindContours.ContourToCandle(ImgFilename);
 
+                for (int x = 0; x < Candles.Count; x++)
+                {
+                    Candles[x].PContour.MouseLeftButtonDown += ClickChild;
+                    Polygones.Add(Candles[x].PContour);
+                    MW.myCanvas.Children.Add(Candles[x].PContour);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Open image file", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public Command CalculatePeaksCommand { get; }
@@ -144,41 +146,22 @@ namespace GraphAnalysis.VM
 
             if (Candles.Any())
             {
-                if (Peaks.Any())              //отчистку холста организовать выборочную!!!        на потом
-                {
-                    MW.myCanvas.Children.Clear();
+                MW.myCanvas.Children.Clear();
 
-                    CalculatePeaks calculatePeaks = new(Candles);
-                    Peaks = calculatePeaks.Peaks;    // Peaks как данные и Peaks для визуализщации не одно и тоже, надо фильтр встроить.
-                }
-                else
-                {
-                    MW.myCanvas.Children.Clear();
+                CalculatePeaks calculatePeaks = new(Candles, 9);  // 10 передавать из настроек!!!             на потом
+                Peaks = calculatePeaks.Peaks;
 
-                    CalculatePeaks calculatePeaks = new(Candles);
-                    Peaks = calculatePeaks.Peaks;
-                }
-                
                 /// TEST        visual for me
-                foreach(var peak in Peaks)
+                foreach (Peak peak in Peaks)
                 {
-                    Line l = new();
-                    l.X1 = peak.Tsn.ExtremPpoint.X;
-                    l.Y1 = peak.Tsn.ExtremPpoint.Y;
-                    l.X2 = peak.Tsp.ExtremPpoint.X;
-                    l.Y2 = peak.Tsp.ExtremPpoint.Y;
-                    l.Stroke = Brushes.Red;
-                    l.StrokeThickness = 1;
-                    MW.myCanvas.Children.Add(l);
+                    TextBlock Text = new();
+                    Text.Text = peak.Mass.ToString();
+                    Text.Foreground = Brushes.Red;
 
-                    Line l2 = new();
-                    l2.X1 = peak.Tsp.ExtremPpoint.X;
-                    l2.Y1 = peak.Tsp.ExtremPpoint.Y;
-                    l2.X2 = peak.Tsk.ExtremPpoint.X;
-                    l2.Y2 = peak.Tsk.ExtremPpoint.Y;
-                    l2.Stroke = Brushes.Red;
-                    l2.StrokeThickness = 1;
-                    MW.myCanvas.Children.Add(l2);
+                    Canvas.SetTop(Text, peak.TextPoint.Y);
+                    Canvas.SetLeft(Text, peak.TextPoint.X);
+
+                    MW.myCanvas.Children.Add(Text);
                 }
 
             }
@@ -204,7 +187,7 @@ namespace GraphAnalysis.VM
         {
             MW = (MainWindow)Application.Current.MainWindow;
             Polygones = new ObservableCollection<Polygon>();
-            
+
             #region Команды
 
             OpenNewCommand = new Command(OnOpenNewCommandExecuted, CanOpenNewCommandExecute);
@@ -236,7 +219,6 @@ namespace GraphAnalysis.VM
         // ____________________________________________________________________________________________
 
 
-        
 
     }
 }
