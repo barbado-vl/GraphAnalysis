@@ -153,7 +153,7 @@ namespace GraphAnalysis.VM
                 JpegBitmapEncoder encoder = new JpegBitmapEncoder();
 
                 encoder.Frames.Add(BitmapFrame.Create(image));
-                using var filestream = new FileStream("temp.jpg", FileMode.Create);
+                using FileStream filestream = new FileStream("temp.jpg", FileMode.Create);
                 encoder.Save(filestream);
                 filestream.Close();
 
