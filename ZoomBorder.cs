@@ -30,7 +30,10 @@ namespace GraphAnalysis
             set
             {
                 if (value != null && value != this.Child)
+                {
                     this.Initialize(value);
+                }
+
                 base.Child = value;
             }
         }
@@ -51,7 +54,7 @@ namespace GraphAnalysis
                 this.MouseLeftButtonDown += child_MouseLeftButtonDown;
                 this.MouseLeftButtonUp += child_MouseLeftButtonUp;
                 this.MouseMove += child_MouseMove;
-                this.PreviewMouseRightButtonDown += new MouseButtonEventHandler(child_PreviewMouseRightButtonDown);
+                this.PreviewMouseRightButtonDown += new MouseButtonEventHandler(Child_PreviewMouseRightButtonDown);
             }
         }
 
@@ -120,7 +123,7 @@ namespace GraphAnalysis
             }
         }
 
-        void child_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        private void Child_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             this.Reset();
         }

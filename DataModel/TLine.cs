@@ -10,15 +10,20 @@ namespace GraphAnalysis.DataModel
 {
     public class TLine
     {
+        public TLine() 
+        {
+            Id = "";
+        }
+
         public Point FirstPoint { get; set; }
         public Point SecondPoint { get; set; }
 
-        string MainLtype { get; set; }
-        string TouchLtype { get; set; }
-        bool CommonLtype { get; set; }
-        string VectorLtype { get; set; }
+        public string MainLtype { get; set; }
+        public string TouchLtype { get; set; }
+        public bool CommonLtype { get; set; }
+        public string VectorLtype { get; set; }
 
-        string id { get; set; }
+        public string Id { get; set; }
 
     }
 }

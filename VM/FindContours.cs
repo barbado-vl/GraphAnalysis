@@ -25,6 +25,7 @@ namespace GraphAnalysis.VM
                 VectorOfPoint contour = contours[x];
                 Candle candle = new(contour);
                 candle.id += x.ToString();
+                candle.Contour.Uid = candle.id;
                 candles.Add(candle);
             }
 

@@ -53,3 +53,18 @@ dotnet_diagnostic.IDE0047.severity = suggestion
 
 # IDE0056: Использовать оператор индекса
 dotnet_diagnostic.IDE0056.severity = suggestion
+
+# IDE0011: Добавить фигурные скобки
+dotnet_diagnostic.IDE0011.severity = none
+
+# IDE0048: Добавить круглые скобки для ясности
+dotnet_diagnostic.IDE0048.severity = silent
+
+# IDE0003: Удалить квалификацию
+dotnet_diagnostic.IDE0003.severity = silent
+
+# CS0219: Переменная назначена, но ее значение не используется
+dotnet_diagnostic.CS0219.severity = suggestion
+
+# IDE0040: Добавьте модификаторы доступности
+dotnet_diagnostic.IDE0040.severity = warning

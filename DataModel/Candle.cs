@@ -25,10 +25,14 @@ namespace GraphAnalysis.DataModel
                 myPointCollection.Add(myP);
             }
 
-            PContour.Stroke = Brushes.Red;
-            PContour.StrokeThickness = 1;
-            //PContour.Fill = Brushes.White;
-            PContour.Points = myPointCollection;
+            /// <summary> прозрачный фон -- чтобы не видеть, но можно было взаимодействовать </summary>
+            SolidColorBrush myBrush = new();
+            myBrush.Opacity = 0;
+
+            Contour.Fill = myBrush;
+            Contour.Stroke = Brushes.Red;
+            Contour.StrokeThickness = 1;
+            Contour.Points = myPointCollection;
 
             MaxPoint = IfSeveralMaxMinPoint(max, contour);
             MinPoint = IfSeveralMaxMinPoint(min, contour);
@@ -45,11 +49,11 @@ namespace GraphAnalysis.DataModel
         public Point MinPoint
         {
             get { return _MinPoint; }
-            set { _MinPoint = value; }
+            set => _MinPoint = value;
         }
 
         public string id = "candle_";
-        public Polygon PContour = new();
+        public Polygon Contour = new();
 
         private static Point IfSeveralMaxMinPoint(int mm, VectorOfPoint contour)
         {
