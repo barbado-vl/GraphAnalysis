@@ -1,22 +1,23 @@
 ﻿using GraphAnalysis.DataModel;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GraphAnalysis.VM
 {
     public class CalculatePeaks
     {
-        public List<Peak> Peaks = new();
-        public int N;                                     // НАДО передавать из VM
+        public List<Peak> Peaks;
+        public int N;
 
         /// <summary> Ищем точки бифуркации
         /// Собираем массу (свечки) вокруг точки бифуркации (выбраной свечки) 
         /// Смотрим когда Max меньше чем у выбраной свечки, Min больше, в лево и в право
         /// Операторы сравнения взяты с учетом того, что сравниваем точки координат Canvas
         /// 4 цикла -- в ПРАВО по Max и Min, потом в ЛЕВО по Max и Min /// </summary>
-        public CalculatePeaks(List<Candle> candles, int i)
+        public CalculatePeaks(List<Peak> peaks, List<Candle> candles, int i)
         {
             N = i;
+            Peaks = peaks;
+
 
             List<Candle> UpRightBranch = new();
             List<Candle> UpLeftBranch = new();
@@ -79,22 +80,23 @@ namespace GraphAnalysis.VM
 
         private void ConditionByCreateDownPeak(List<Candle> firstbranch, List<Candle> secondtbranch, Candle currentcandle)
         {
-            YQualsY(firstbranch, "down");
+            YQualsY(firstbranch, "Dn");
 
             if (firstbranch[^1].MaxPoint.Y <= currentcandle.MaxPoint.Y &&
                 (firstbranch.Count < secondtbranch.Count * 2 || secondtbranch.Count == 0))
             {
-                Peaks.Add(new Peak("down", firstbranch));
+                Peaks.Add(new Peak(Peaks.Count, "Dn", firstbranch));
             }
         }
+
         private void ConditionByCreateUpPeak(List<Candle> firstbranch, List<Candle> secondtbranch, Candle currentcandle)
         {
-            YQualsY(firstbranch, "up");
+            YQualsY(firstbranch, "Up");
 
             if (firstbranch[^1].MinPoint.Y >= currentcandle.MinPoint.Y &&
                 (firstbranch.Count < secondtbranch.Count * 2 || secondtbranch.Count == 0))
             {
-                Peaks.Add(new Peak("up", firstbranch));
+                Peaks.Add(new Peak(Peaks.Count, "Up", firstbranch));
             }
         }
 
@@ -108,7 +110,7 @@ namespace GraphAnalysis.VM
         {
             List<int> numbers = new() { 0 };
 
-            if (direction == "down") // как у пика
+            if (direction == "Dn") // как у пика
             {
                 for (int n = N - 1; n < tempcandles.Count; n++)
                 {
@@ -137,7 +139,7 @@ namespace GraphAnalysis.VM
                         {
                             candles.Add(tempcandles[i]);
                         }
-                        Peaks.Add(new Peak(direction, candles));
+                        Peaks.Add(new Peak(Peaks.Count, direction, candles));
                     }
                 }
             }

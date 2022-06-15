@@ -7,7 +7,8 @@
         xmlns:VM="clr-namespace:GraphAnalysis.VM"
         mc:Ignorable="d"
         Title="{Binding Title}" 
-        Height="450" Width="800">
+        Height="450" Width="800"
+        Loaded="Window_Loaded">
     <Window.DataContext>
         <VM:MainWindowVM/>
     </Window.DataContext>
@@ -16,9 +17,12 @@
         <KeyBinding Key="Delete" Command="{Binding DeleteSelectedItemsCommand}" CommandTarget="{Binding ElementName=myCanvas}"/>
     </Window.InputBindings>
     <DockPanel LastChildFill="True">
-        <StackPanel 
+        <DockPanel 
             DockPanel.Dock="Top">
-            <Menu Height="20" VerticalAlignment="Top">
+            <Menu 
+                DockPanel.Dock="Left" 
+                VerticalAlignment="Top" 
+                Height="20">
                 <MenuItem Header="File">
                     <MenuItem Header="New" Command="{Binding OpenNewImageCommand}" />
                     <MenuItem Header="Clear"/>
@@ -29,38 +33,43 @@
                     <MenuItem Header="Delete" Command="{Binding DeleteSelectedItemsCommand}" />
                 </MenuItem>
                 <MenuItem Header="View">
-                    <Expander Header="Candles" IsExpanded="True">
-                        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-                            <CheckBox Content="All" x:Name="checkBox_CandleAll" Command="{Binding CheckedChangeCommand}" CommandParameter="{Binding ElementName=checkBox_CandleAll}"/>
-                            <CheckBox Content="by Peaks" x:Name="checkBox_CandleByPeaks" Command="{Binding CheckedChangeCommand}" CommandParameter="{Binding ElementName=checkBox_CandleByPeaks}"/>
-                            <CheckBox Content="by lines" x:Name="checkBox_CandleByLines" Command="{Binding CheckedChangeCommand}" CommandParameter="{Binding ElementName=checkBox_CandleByLines}"/>
-                        </StackPanel>
-                    </Expander>
+                    <CheckBox Content="Candles" x:Name="checkBox_CandleAll" Command="{Binding CheckedChangeCommand}" CommandParameter="{Binding ElementName=checkBox_CandleAll}"/>
                     <CheckBox Content="Peaks" x:Name="checkBox_Peaks" Command="{Binding CheckedChangeCommand}" CommandParameter="{Binding ElementName=checkBox_Peaks}"/>
-                    <Expander Header="Line">
-                        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-                            <CheckBox Content="All"/>
-                            <CheckBox Content="Type 1"/>
-                            <CheckBox Content="Type 2"/>
-                        </StackPanel>
-                    </Expander>
-                    <CheckBox Content="Other"/>
+                    <CheckBox Content="Line" x:Name="checkBox_TLine" Command="{Binding CheckedChangeCommand}" CommandParameter="{Binding ElementName=checkBox_TLine}"/>
                 </MenuItem>
             </Menu>
-        </StackPanel>
-        <ToolBarTray 
-            DockPanel.Dock="Left" 
-            Orientation="Vertical" 
-            VerticalAlignment="Center">
-            <ToolBar VerticalAlignment="Center">
-                <Button Content="FC" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Command="{Binding FindContoursCommand}"/>
-                <Button Content="PK" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding CalculatePeaksCommand}"/>
-            </ToolBar>
-            <ToolBar VerticalAlignment="Bottom" >
-                <Button Content="uSe" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ClearSelectedListCommand}"/>
-                <Button Content="res" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ResetZoomBorderCommand}"/>
-            </ToolBar>
-        </ToolBarTray>
+            <DockPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
+                <TextBlock Text="Input:" Height="20"/>
+                <TextBox x:Name="InputLine" Text="{Binding InputLine, UpdateSourceTrigger=PropertyChanged}" Height="20" Width="100"/>
+            </DockPanel>
+        </DockPanel>
+        <DockPanel 
+            DockPanel.Dock="Left">
+            <StackPanel 
+                DockPanel.Dock="Top" 
+                Orientation="Vertical">
+                <TextBlock Text="Up/Dn" FontSize="10" HorizontalAlignment="Center" />
+                <TextBox x:Name="TextBox_Direction" Text="{Binding Direction, UpdateSourceTrigger=PropertyChanged}" Height="20" Width="20" MaxLength="2"/>
+                <TextBlock Text="minP" FontSize="10" HorizontalAlignment="Center"/>
+                <TextBox x:Name="TextBox_MinPeak" Text="{Binding MinSizePeak, UpdateSourceTrigger=PropertyChanged}" Height="20" Width="20" MaxLength="2"/>
+            </StackPanel>
+            <ToolBarTray 
+                DockPanel.Dock="Left" 
+                Orientation="Vertical" 
+                VerticalAlignment="Center">
+                <ToolBar VerticalAlignment="Center">
+                    <Button Content="FC" Width="20" Height="20" Command="{Binding FindContoursCommand}"/>
+                    <Button Content="PK" Width="20" Height="20" Command="{Binding CalculatePeaksCommand}"/>
+                    <Button Content="SP" Width="20" Height="20" Command="{Binding SeriesPeaksCommand}"/>
+                    <Button Content="TL" Width="20" Height="20" Command="{Binding CalculateTLinesCommand}"/>
+                    <Button Content="RE" Width="20" Height="20" Command="{Binding RecordCommand}"/>
+                </ToolBar>
+                <ToolBar VerticalAlignment="Bottom" >
+                    <Button Content="uSe" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ClearSelectedListCommand}"/>
+                    <Button Content="res" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ResetZoomBorderCommand}"/>
+                </ToolBar>
+            </ToolBarTray>
+        </DockPanel>
         <TabControl 
             DockPanel.Dock="Right">
             <!--Слева должно выезжать окно/вкладка с текстовой информацией - (ListBox) список свечек, список пиков, список линий, запись-->
@@ -70,10 +79,13 @@
             Height="20">
             <StatusBarItem>
                 <TextBlock Text="{Binding StatusMessage}"/>
+                
             </StatusBarItem>
         </StatusBar>
         <StackPanel>
-            <local:ZoomBorder x:Name="brdrOne">
+            <local:ZoomBorder 
+                x:Name="brdrOne" 
+                Focusable="True" MouseLeftButtonDown="brdrOne_MouseLeftButtonDown">
                 <Canvas x:Name="myCanvas" Width="{Binding WidthCanvas}" Height="{Binding HeightCanvas}">
                     <Canvas.Background>
                         <ImageBrush ImageSource = "{Binding BGImage, UpdateSourceTrigger=PropertyChanged}"/>

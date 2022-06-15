@@ -13,8 +13,8 @@ namespace GraphAnalysis.VM
         /// <summary> Main method of this class </summary>
         public static List<Candle> ContourToCandle(string filename)
         {
-            VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
-            List<Candle> candles = new List<Candle>();
+            VectorOfVectorOfPoint contours = new();
+            List<Candle> candles = new();
 
             contours = TakeContours(filename, contours);
             contours = Filtr(contours);

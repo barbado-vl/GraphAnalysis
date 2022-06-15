@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using GraphAnalysis.VM;
+using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -6,11 +8,14 @@ using System.Windows.Media;
 
 namespace GraphAnalysis
 {
-    public class ZoomBorder : Border
+    internal class ZoomBorder : Border
     {
         private UIElement child = null;
         private Point origin;
         private Point start;
+
+        internal bool Flag_Select;
+
 
         private TranslateTransform GetTranslateTransform(UIElement element)
         {
@@ -40,7 +45,7 @@ namespace GraphAnalysis
 
         public void Initialize(UIElement element)
         {
-            this.child = element;
+            child = element;
             if (child != null)
             {
                 TransformGroup group = new TransformGroup();
@@ -50,11 +55,15 @@ namespace GraphAnalysis
                 group.Children.Add(tt);
                 child.RenderTransform = group;
                 child.RenderTransformOrigin = new Point(0.0, 0.0);
-                this.MouseWheel += child_MouseWheel;
-                this.MouseLeftButtonDown += child_MouseLeftButtonDown;
-                this.MouseLeftButtonUp += child_MouseLeftButtonUp;
-                this.MouseMove += child_MouseMove;
-                this.PreviewMouseRightButtonDown += new MouseButtonEventHandler(Child_PreviewMouseRightButtonDown);
+                MouseWheel += child_MouseWheel;
+                MouseLeftButtonDown += child_MouseLeftButtonDown;
+                MouseLeftButtonUp += child_MouseLeftButtonUp;
+                MouseMove += child_MouseMove;
+                KeyDown += PushKeyR;
+
+                Flag_Select = false;
+                KeyDown += PushLeftCtrl;
+                KeyUp += UpLeftCtrl;
             }
         }
 
@@ -74,70 +83,113 @@ namespace GraphAnalysis
             }
         }
 
-        #region Child Events
+        #region Child Zoom Events
 
-        private void child_MouseWheel(object sender, MouseWheelEventArgs e)
+        public void child_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (child != null)
+            if (Flag_Select == false)
             {
-                var st = GetScaleTransform(child);
-                var tt = GetTranslateTransform(child);
+                if (child != null)
+                {
+                    var st = GetScaleTransform(child);
+                    var tt = GetTranslateTransform(child);
 
-                double zoom = e.Delta > 0 ? .2 : -.2;
-                if (!(e.Delta > 0) && (st.ScaleX < .4 || st.ScaleY < .4))
-                    return;
+                    double zoom = e.Delta > 0 ? .2 : -.2;
+                    if (!(e.Delta > 0) && (st.ScaleX < .4 || st.ScaleY < .4))
+                        return;
 
-                Point relative = e.GetPosition(child);
-                double absoluteX;
-                double absoluteY;
+                    Point relative = e.GetPosition(child);
+                    double absoluteX;
+                    double absoluteY;
 
-                absoluteX = relative.X * st.ScaleX + tt.X;
-                absoluteY = relative.Y * st.ScaleY + tt.Y;
+                    absoluteX = relative.X * st.ScaleX + tt.X;
+                    absoluteY = relative.Y * st.ScaleY + tt.Y;
 
-                st.ScaleX += zoom;
-                st.ScaleY += zoom;
+                    st.ScaleX += zoom;
+                    st.ScaleY += zoom;
 
-                tt.X = absoluteX - relative.X * st.ScaleX;
-                tt.Y = absoluteY - relative.Y * st.ScaleY;
+                    tt.X = absoluteX - relative.X * st.ScaleX;
+                    tt.Y = absoluteY - relative.Y * st.ScaleY;
+                }
             }
         }
 
-        private void child_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        public void child_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (child != null)
+            if (Flag_Select == false)
             {
-                var tt = GetTranslateTransform(child);
-                start = e.GetPosition(this);
-                origin = new Point(tt.X, tt.Y);
-                this.Cursor = Cursors.Hand;
-                child.CaptureMouse();
-            }
-        }
-
-        private void child_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if (child != null)
-            {
-                child.ReleaseMouseCapture();
-                this.Cursor = Cursors.Arrow;
-            }
-        }
-
-        private void Child_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            this.Reset();
-        }
-
-        private void child_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (child != null)
-            {
-                if (child.IsMouseCaptured)
+                if (child != null)
                 {
                     var tt = GetTranslateTransform(child);
-                    Vector v = start - e.GetPosition(this);
-                    tt.X = origin.X - v.X;
-                    tt.Y = origin.Y - v.Y;
+                    start = e.GetPosition(this);
+                    origin = new Point(tt.X, tt.Y);
+                    this.Cursor = Cursors.Hand;
+                    child.CaptureMouse();
+                }
+            }
+        }
+
+        public void child_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (Flag_Select == false)
+            {
+                if (child != null)
+                {
+                    child.ReleaseMouseCapture();
+                    this.Cursor = Cursors.Arrow;
+                }
+            }
+        }
+
+        public void child_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (Flag_Select == false)
+            {
+                if (child != null)
+                {
+                    if (child.IsMouseCaptured)
+                    {
+                        var tt = GetTranslateTransform(child);
+                        Vector v = start - e.GetPosition(this);
+                        tt.X = origin.X - v.X;
+                        tt.Y = origin.Y - v.Y;
+                    }
+                }
+            }
+        }
+
+        public void PushKeyR(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.R)
+            {
+                if (Flag_Select == false && e.Source is ZoomBorder)
+                {
+                    Reset();
+                }
+            }
+        }
+        #endregion
+
+        #region Selected Event
+
+        public void PushLeftCtrl(object sender, KeyEventArgs e)
+        {
+            if (e.Source is ZoomBorder)
+            {
+                if (e.Key == Key.LeftCtrl)
+                {
+                    Flag_Select = true;
+                }
+            }
+        }
+
+        public void UpLeftCtrl(object sender, KeyEventArgs e)
+        {
+            if (e.Source is ZoomBorder)
+            {
+                if (e.Key == Key.LeftCtrl)
+                {
+                    Flag_Select = false;
                 }
             }
         }
