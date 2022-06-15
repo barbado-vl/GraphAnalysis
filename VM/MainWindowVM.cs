@@ -590,8 +590,8 @@ namespace GraphAnalysis.VM
                     MW.myCanvas.Children.Add(slice);
 
                     RecordWindow RW = new();
-                    RW.Show();
                     RW.RecordMethod(cells);
+                    RW.Show();
                 }
                 else StatusMessage = "ВНИМАНИЕ: выбранная свечка не подходит для проведения расчетов Записи";
             }
