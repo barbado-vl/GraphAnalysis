@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include=".github\workflow\deploy-graph-analysis.yml" />
+    <None Include=".github\workflows\deploy-graph-analysis.yml" />
   </ItemGroup>
 
   <ItemGroup>
