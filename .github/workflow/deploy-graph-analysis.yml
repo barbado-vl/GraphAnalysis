@@ -1,0 +1,25 @@
+﻿name: "Deploy Graph Analysis"
+
+on:
+  push:
+    tags:
+        - "graph-analysis/v*"
+ 
+env:
+  PROJECT_PATH: GraphAnalysis/GraphAnalysis.csproj
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: action/setup-dotnet@v1
+        with:
+          dotnet-version: net5.0.x
+
+      - run: dotnet restore ${{ env.PROJECT_PATH }}
+
+      - run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
+
+      - run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true
