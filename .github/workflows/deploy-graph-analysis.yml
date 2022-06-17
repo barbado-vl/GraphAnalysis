@@ -6,7 +6,7 @@ on:
         - "graph-analysis/v*"
  
 env:
-  PROJECT_PATH: GraphAnalysis/GraphAnalysis.csproj
+  PROJECT_PATH: GraphAnalysis.csproj
 
 jobs:
   deploy:
