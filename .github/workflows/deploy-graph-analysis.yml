@@ -6,7 +6,7 @@ on:
         - "graph-analysis/v*"
  
 env:
-  PROJECT_PATH: GraphAnalysis.csproj
+  PROJECT_PATH: GraphAnalysis/GraphAnalysis.csproj
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
 
       - uses: action/setup-dotnet@v1
         with:
-          dotnet-version: net5.0.x
+          dotnet-version: 5.0.x
 
       - run: dotnet restore ${{ env.PROJECT_PATH }}
 
