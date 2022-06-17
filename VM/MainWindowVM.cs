@@ -247,7 +247,7 @@ namespace GraphAnalysis.VM
             try
             {
                 OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Filter = "Image files (*.png;*.jpg)|*.png;*.jpg|All files (*.*)|*.*";
+                openFileDialog.Filter = "Image files (*.png;*.jpg; *.bmp)|*.png;*.jpg;*.bmp|All files (*.*)|*.*";
                 openFileDialog.InitialDirectory = @"c:\temp\";
 
                 if (openFileDialog.ShowDialog() == true)
