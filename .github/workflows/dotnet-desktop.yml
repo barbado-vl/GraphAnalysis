@@ -56,7 +56,7 @@ jobs:
 
     env:
       Solution_Name: GraphAnalysis.sln                             # Replace with your solution name, i.e. MyWpfApp.sln.
-      Wap_Project_Directory: GraphAnalysis    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
+      #Wap_Project_Directory: GraphAnalysis    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
       Wap_Project_Path: GraphAnalysis/GraphAnalysis.csproj               # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
 
     steps:
