@@ -57,4 +57,3 @@ jobs:
           type: 'zip'
           filename: 'release.zip'
           path: bin/Release/net5.0-windows/win-x64/publish
-          directory: refs/heads/dev2
