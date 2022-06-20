@@ -13,6 +13,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  PROJECT_PATH: GraphAnalysis/GraphAnalysis.csproj
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -39,3 +42,17 @@ jobs:
         
       - name: dotnet publish
         run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true
+        
+      - uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}  
+        
+      - uses: csexton/release-asset-action@v2
+        with:
+	        github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: GraphAnalysis/bin/Release/net5.0-windows/win-x64/publish/
+          release-url: ${{ steps.create_release.outputs.upload_url }}
