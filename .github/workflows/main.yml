@@ -57,3 +57,11 @@ jobs:
           type: 'zip'
           filename: 'release.zip'
           path: bin/Release/net5.0-windows/win-x64/publish
+          directory: bin/Release/net5.0-windows/win-x64/publish
+          
+      - name: Upload Assets to Release with a wildcard
+        uses: csexton/release-asset-action@v2
+        with:
+          pattern: "bin/Release/net5.0-windows/win-x64/publish/*.zip"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          release-url: ${{ steps.create_release.outputs.upload_url }}
