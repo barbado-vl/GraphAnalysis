@@ -53,6 +53,6 @@ jobs:
           
       - uses: csexton/release-asset-action@v2
         with:
-          pattern: "bin/Release/net5.0-windows/win-x64/publish/*.zip"
+          pattern: "bin/Release/net5.0-windows/win-x64/publish/*"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           release-url: ${{ steps.create_release.outputs.upload_url }}
