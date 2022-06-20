@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_PATH: GraphAnalysis.csproj
+  PROJECT_PATH: GraphAnalysis/GraphAnalysis.csproj
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -53,6 +53,6 @@ jobs:
           
       - uses: csexton/release-asset-action@v2
         with:
-          pattern: GraphAnalysis/bin/Release/net5.0-windows/win-x64/publish
+          pattern: "build/*.zip"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           release-url: ${{ steps.create_release.outputs.upload_url }}
