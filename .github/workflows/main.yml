@@ -56,7 +56,7 @@ jobs:
         with:
           type: 'zip'
           filename: 'release.zip'
-          path: bin/Release/net5.0-windows/win-x64/publish
+          path: bin/Release/net5.0-windows/win-x64/publish/
           
       - name: Upload Assets to Release with a wildcard
         uses: csexton/release-asset-action@v2
