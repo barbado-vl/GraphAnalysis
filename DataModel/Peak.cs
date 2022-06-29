@@ -47,7 +47,6 @@ namespace GraphAnalysis.DataModel
             targetcandles = targetcandles.OrderBy(a => a.MaxPoint.X).ToList();
 
             List<Candle> masscandles = new();
-
             for (int n = allcandles.IndexOf(targetcandles[0]); n <= allcandles.IndexOf(targetcandles[^1]); n++)
             {
                 masscandles.Add(allcandles[n]);
@@ -161,7 +160,7 @@ namespace GraphAnalysis.DataModel
             {
                 tsp = candles[1];
                 x = 1;
-                for (int n = 2; n < candles.Count; n++)
+                for (int n = 2; n < candles.Count - 1; n++)
                 {
                     if (candles[n].MaxPoint.Y < tsp.MaxPoint.Y) { tsp = candles[n]; x = n; }
                 }
@@ -171,7 +170,7 @@ namespace GraphAnalysis.DataModel
             {
                 tsp = candles[1];
                 x = 1;
-                for (int n = 2; n < candles.Count; n++)
+                for (int n = 2; n < candles.Count - 1; n++)
                 {
                     if (candles[n].MinPoint.Y > tsp.MinPoint.Y) { tsp = candles[n]; x = n; }
                 }
@@ -207,38 +206,44 @@ namespace GraphAnalysis.DataModel
 
         private void SetNp(List<Candle> targetcandles)
         {
-            for (int n = targetcandles.Count - 2; n > 0; n--)
+            double hill = CutOffPoint.Y;
+
+            for (int n = 1; n < targetcandles.Count - 1; n++)
             {
                 if (Direction is "Up" && targetcandles[n].MinPoint.Y > CutOffPoint.Y)
                 {
                     double np_check = (targetcandles[n].MinPoint.Y - Tsp.Y) * 0.117;
 
-                    if (targetcandles[n].MinPoint.Y < FallPoint.Y ||
-                        (targetcandles[n].MinPoint.Y == FallPoint.Y && targetcandles[n].MinPoint.Y - CutOffPoint.Y <= np_check))
+                    if (targetcandles[n].MinPoint.Y - hill <= np_check)
                     {
                         Np.Add(targetcandles[n].MinPoint);
                         CandlesId.Add(targetcandles[n].id);
 
                         targetcandles[n].CreateEllipse(targetcandles[n].MinPoint);
 
-                        targetcandles.Remove(targetcandles[n]);
+                        hill = targetcandles[n].MinPoint.Y;
                     }
                 }
                 else if (Direction is "Dn" && targetcandles[n].MaxPoint.Y < CutOffPoint.Y)
                 {
                     double np_check = (Tsp.Y - targetcandles[n].MaxPoint.Y) * 0.117;
 
-                    if (targetcandles[n].MaxPoint.Y > FallPoint.Y ||
-                        (targetcandles[n].MaxPoint.Y == FallPoint.Y && CutOffPoint.Y - targetcandles[n].MaxPoint.Y <= np_check))
+                    if (hill - targetcandles[n].MaxPoint.Y <= np_check)
                     {
                         Np.Add(targetcandles[n].MaxPoint);
                         CandlesId.Add(targetcandles[n].id);
 
                         targetcandles[n].CreateEllipse(targetcandles[n].MaxPoint);
 
-                        targetcandles.Remove(targetcandles[n]);
+                        hill = targetcandles[n].MaxPoint.Y;
                     }
                 }
+            }
+
+            for (int n = targetcandles.Count - 2; n > 0; n--)
+            {
+                if (Np.Contains(targetcandles[n].MaxPoint) || Np.Contains(targetcandles[n].MinPoint))
+                    targetcandles.Remove(targetcandles[n]);
             }
         }
 
@@ -251,7 +256,7 @@ namespace GraphAnalysis.DataModel
 
             if (Direction is "Up")
             {
-                while (candles[n].MinPoint.Y <= CutOffPoint.Y)
+                while (candles[n].MinPoint.Y <= CutOffPoint.Y && candles[n].MinPoint.X != FallPoint.X)
                 {
                     mass++;
                     n = CutOffPoint.X < FallPoint.X ? n + 1 : n - 1;
@@ -259,7 +264,7 @@ namespace GraphAnalysis.DataModel
 
                 for (int np = 0; np < Np.Count; np++)
                 {
-                    while (candles[n].MinPoint.Y <= Np[np].Y)
+                    while (candles[n].MinPoint.Y <= Np[np].Y && candles[n].MinPoint.X != FallPoint.X)
                     {
                         mass++;
                         n = CutOffPoint.X < FallPoint.X ? n + 1 : n - 1;
@@ -270,7 +275,7 @@ namespace GraphAnalysis.DataModel
             }
             else // Direction is "Dn"
             {
-                while (candles[n].MaxPoint.Y >= CutOffPoint.Y)
+                while (candles[n].MaxPoint.Y >= CutOffPoint.Y && candles[n].MaxPoint.X != FallPoint.X)
                 {
                     mass++;
                     n = CutOffPoint.X < FallPoint.X ? n + 1 : n - 1;
@@ -278,7 +283,7 @@ namespace GraphAnalysis.DataModel
 
                 for (int np = 0; np < Np.Count; np++)
                 {
-                    while (candles[n].MaxPoint.Y >= Np[np].Y)
+                    while (candles[n].MaxPoint.Y >= Np[np].Y && candles[n].MaxPoint.X != FallPoint.X)
                     {
                         mass++;
                         n = CutOffPoint.X < FallPoint.X ? n + 1 : n - 1;

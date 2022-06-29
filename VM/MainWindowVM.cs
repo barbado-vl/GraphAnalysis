@@ -143,17 +143,6 @@ namespace GraphAnalysis.VM
         #endregion
 
 
-        #region КОМАНДЫ элементов окна
-
-        public Command ResetZoomBorderCommand { get; }
-        private bool CanResetZoomBorderCommandExecute(object p) => true;
-        private void OnResetZoomBorderCommandExecuted(object p)
-        {
-            MW.brdrOne.Reset();
-        }
-
-        #endregion
-
         #region КОМАНДЫ и Методы основной логики + VM
 
         private void ClearData(string sender)
@@ -235,6 +224,13 @@ namespace GraphAnalysis.VM
 
             StatusMessage = "";
 
+            MW.brdrOne.Reset();
+        }
+
+        public Command ResetZoomBorderCommand { get; }
+        private bool CanResetZoomBorderCommandExecute(object p) => true;
+        private void OnResetZoomBorderCommandExecuted(object p)
+        {
             MW.brdrOne.Reset();
         }
 
