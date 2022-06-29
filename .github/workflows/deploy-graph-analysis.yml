@@ -1,29 +1,49 @@
-﻿name: "Deploy Graph Analysis"
+﻿# This is a basic workflow to help you get started with Actions
 
+name: Graphanalysis
+
+# Controls when the workflow will run
 on:
+  # Triggers the workflow on push or pull request events but only for the "dev2" branch
   push:
     tags:
         - "graph-analysis/v*"
- 
+  pull_request:
+    branches: [ "dev2" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 env:
-  PROJECT_PATH: GraphAnalysis/GraphAnalysis.csproj
+  PROJECT_PATH: GraphAnalysis.csproj
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  deploy:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
     runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+      
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 5.0.x
 
-      - run: dotnet restore ${{ env.PROJECT_PATH }}
+      # Runs a single command using the runners shell
+      - name: dotnet restore
+        run: dotnet restore ${{ env.PROJECT_PATH }}
 
-      - run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
-
-      - run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true --no-build
-
+      # Runs a set of commands using the runners shell
+      - name: dotnet build
+        run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
+        
+      - name: dotnet publish
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true
+        
       - uses: actions/create-release@v1
         id: create_release
         env:
@@ -31,9 +51,17 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
-
-      - uses: csexton/release-asset-action@v2
+          
+      - name: Archive Release
+        uses: thedoctor0/zip-release@main
         with:
-          pattern: GraphAnalysis/bin/Release/net5.0-windows/win-x64/publish
+          type: 'zip'
+          filename: 'Graph-Analisys-release.zip'
+          path: bin/Release/net5.0-windows/win-x64/publish/
+          
+      - name: Upload Assets to Release with a wildcard
+        uses: csexton/release-asset-action@v2
+        with:
+          pattern: "*.zip"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           release-url: ${{ steps.create_release.outputs.upload_url }}
