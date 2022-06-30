@@ -480,8 +480,7 @@ namespace GraphAnalysis.DataModel
 
             else if (extremum is "max" && Direction is "Up")
             {
-                if (Tsp.X == 0 && candle.MaxPoint.X != CutOffPoint.X && candle.MaxPoint.X != FallPoint.X &&
-                         candle.MaxPoint.Y < CutOffPoint.Y && candle.MaxPoint.Y < FallPoint.Y)
+                if (Tsp.X == 0 && candle.MaxPoint.Y < CutOffPoint.Y && candle.MaxPoint.Y < FallPoint.Y)
                 {
                     Tsp = candle.MaxPoint;
 
@@ -530,8 +529,7 @@ namespace GraphAnalysis.DataModel
 
             else if (extremum is "min" && Direction is "Dn")
             {
-                if (Tsp.X == 0 && candle.MinPoint.X != CutOffPoint.X && candle.MinPoint.X != FallPoint.X &&
-                        candle.MinPoint.Y > CutOffPoint.Y && candle.MinPoint.Y > FallPoint.Y)
+                if (Tsp.X == 0 && candle.MinPoint.Y > CutOffPoint.Y && candle.MinPoint.Y > FallPoint.Y)
                 {
                     Tsp = candle.MinPoint;
 
