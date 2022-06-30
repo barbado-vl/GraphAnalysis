@@ -105,7 +105,8 @@ namespace GraphAnalysis.DataModel
                 // Проверить и определить ДТП
                 for (int n = targetcandles.Count - 2; n > 0; n--)
                 {
-                    if (AdePoint(targetcandles[n])) targetcandles.Remove(targetcandles[n]);
+                    if (AdePoint(targetcandles[n], "dtp"))
+                        targetcandles.Remove(targetcandles[n]);
                 }
                 targetcandles.Remove(targetcandles[^1]);
                 targetcandles.Remove(targetcandles[0]);
@@ -375,14 +376,12 @@ namespace GraphAnalysis.DataModel
         }
 
 
-        internal bool DeletePoint(Candle candle)
+        internal bool DeletePoint(Candle candle, string extremum)
         {
-            if (Direction is "Up")
+            if (extremum is "max" && Direction is "Up")
             {
-                if (FallPoint == candle.MinPoint || DTP.Contains(candle.MinPoint) || DTP.Contains(candle.MaxPoint) || (Tsp == candle.MaxPoint && FallPoint.X != 0))
+                if (DTP.Contains(candle.MaxPoint) || (Tsp == candle.MaxPoint && FallPoint.X != 0))
                 {
-                    if (FallPoint == candle.MinPoint) FallPoint = new(0, 0);
-                    if (DTP.Contains(candle.MinPoint)) DTP.Remove(candle.MinPoint);
                     if (DTP.Contains(candle.MaxPoint)) DTP.Remove(candle.MaxPoint);
                     if (Tsp == candle.MaxPoint) Tsp = new(0, 0);
 
@@ -390,58 +389,59 @@ namespace GraphAnalysis.DataModel
 
                     return true;
                 }
-                else return false;
             }
-            else // Direction is "Dn"
+            else if (extremum is "min" && Direction is "Up")
             {
-                if (FallPoint == candle.MaxPoint || DTP.Contains(candle.MinPoint) || DTP.Contains(candle.MaxPoint) || (Tsp == candle.MinPoint && FallPoint.X != 0))
+                if (FallPoint == candle.MinPoint || DTP.Contains(candle.MinPoint))
                 {
-                    if (FallPoint == candle.MaxPoint) FallPoint = new(0, 0);
+                    if (FallPoint == candle.MinPoint) FallPoint = new(0, 0);
                     if (DTP.Contains(candle.MinPoint)) DTP.Remove(candle.MinPoint);
-                    if (DTP.Contains(candle.MaxPoint)) DTP.Remove(candle.MaxPoint);
+
+                    CandlesId.Remove(candle.id);
+
+                    return true;
+                }
+            }
+
+            else if (extremum is "min" && Direction is "Dn")
+            {
+                if (DTP.Contains(candle.MinPoint) || (Tsp == candle.MinPoint && FallPoint.X != 0))
+                {
+                    if (DTP.Contains(candle.MinPoint)) DTP.Remove(candle.MinPoint);
                     if (Tsp == candle.MinPoint) Tsp = new(0, 0);
 
                     CandlesId.Remove(candle.id);
 
                     return true;
                 }
-                else return false;
             }
+            else if (extremum is "max" && Direction is "Dn")
+            {
+                if (FallPoint == candle.MaxPoint || DTP.Contains(candle.MaxPoint))
+                {
+                    if (FallPoint == candle.MaxPoint) FallPoint = new(0, 0);
+                    if (DTP.Contains(candle.MaxPoint)) DTP.Remove(candle.MaxPoint);
+
+                    CandlesId.Remove(candle.id);
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
-        internal bool AdePoint(Candle candle)
+        internal bool AdePoint(Candle candle, string extremum)
         {
-            if (Direction is "Up")
+            if (extremum is "dtp" && Direction is "Up")
             {
-                if (Tsp.X == 0 && FallPoint.X == 0) return false;
-                else if (FallPoint.Y == 0 && candle.MinPoint.Y > CutOffPoint.Y)
-                {
-                    FallPoint = candle.MinPoint;
-
-                    CandlesId.Add(candle.id);
-
-                    candle.CreateEllipse(candle.MinPoint);
-
-                    return true;
-                }
-                else if (Tsp.X == 0 && candle.MaxPoint.X != CutOffPoint.X && candle.MaxPoint.X != FallPoint.X &&
-                         candle.MaxPoint.Y < CutOffPoint.Y && candle.MaxPoint.Y < FallPoint.Y)
-                {
-                    Tsp = candle.MaxPoint;
-
-                    CandlesId.Add(candle.id);
-
-                    candle.CreateEllipse(candle.MaxPoint);
-
-                    return true;
-                }
-                else if ((candle.MaxPoint.X != Tsp.X && candle.MaxPoint.Y == Tsp.Y) ||
+                if ((candle.MaxPoint.X != Tsp.X && candle.MaxPoint.Y == Tsp.Y) ||
                          (candle.MaxPoint.Y < Tsp.Y && (candle.MinPoint.Y == CutOffPoint.Y || candle.MinPoint.Y == FallPoint.Y)))
                 {
                     DTP.Add(candle.MaxPoint);
                     CandlesId.Add(candle.id);
 
-                    candle.CreateEllipse(candle.MaxPoint);
+                    if (candle.ViewMax.ellipse == null) candle.CreateEllipse(candle.MaxPoint);
 
                     return true;
                 }
@@ -450,44 +450,20 @@ namespace GraphAnalysis.DataModel
                     DTP.Add(candle.MinPoint);
                     CandlesId.Add(candle.id);
 
-                    candle.CreateEllipse(candle.MinPoint);
+                    if (candle.ViewMin.ellipse == null) candle.CreateEllipse(candle.MinPoint);
 
                     return true;
                 }
-
-                else return false;
             }
-            else // Direction is "Dn"
+            else if (extremum is "dtp" && Direction is "Dn")
             {
-                if (Tsp.X == 0 && FallPoint.X == 0) return false;
-                else if (FallPoint.Y == 0 && candle.MaxPoint.Y < CutOffPoint.Y)
-                {
-                    FallPoint = candle.MaxPoint;
-
-                    CandlesId.Add(candle.id);
-
-                    candle.CreateEllipse(candle.MaxPoint);
-
-                    return true;
-                }
-                else if (Tsp.X == 0 && candle.MinPoint.X != CutOffPoint.X && candle.MinPoint.X != FallPoint.X &&
-                        candle.MinPoint.Y > CutOffPoint.Y && candle.MinPoint.Y > FallPoint.Y)
-                {
-                    Tsp = candle.MinPoint;
-
-                    CandlesId.Add(candle.id);
-
-                    candle.CreateEllipse(candle.MinPoint);
-
-                    return true;
-                }
-                else if ((candle.MinPoint.X != Tsp.X && candle.MinPoint.Y == Tsp.Y) ||
+                if ((candle.MinPoint.X != Tsp.X && candle.MinPoint.Y == Tsp.Y) ||
                          (candle.MinPoint.Y > Tsp.Y && (candle.MaxPoint.Y == CutOffPoint.Y || candle.MaxPoint.Y == FallPoint.Y)))
                 {
                     DTP.Add(candle.MinPoint);
                     CandlesId.Add(candle.id);
 
-                    candle.CreateEllipse(candle.MinPoint);
+                    if (candle.ViewMin.ellipse == null) candle.CreateEllipse(candle.MinPoint);
 
                     return true;
                 }
@@ -496,12 +472,112 @@ namespace GraphAnalysis.DataModel
                     DTP.Add(candle.MaxPoint);
                     CandlesId.Add(candle.id);
 
-                    candle.CreateEllipse(candle.MaxPoint);
+                    if (candle.ViewMax.ellipse == null) candle.CreateEllipse(candle.MaxPoint);
 
                     return true;
                 }
-                else return false;
             }
+
+            else if (extremum is "max" && Direction is "Up")
+            {
+                if (Tsp.X == 0 && candle.MaxPoint.X != CutOffPoint.X && candle.MaxPoint.X != FallPoint.X &&
+                         candle.MaxPoint.Y < CutOffPoint.Y && candle.MaxPoint.Y < FallPoint.Y)
+                {
+                    Tsp = candle.MaxPoint;
+
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMax.ellipse == null) candle.CreateEllipse(candle.MaxPoint);
+
+                    return true;
+                }
+                else if (!DTP.Contains(candle.MaxPoint) &&
+                        ((candle.MaxPoint.X != Tsp.X && candle.MaxPoint.Y == Tsp.Y) ||
+                         (candle.MaxPoint.Y < Tsp.Y && (candle.MinPoint.Y == CutOffPoint.Y || candle.MinPoint.Y == FallPoint.Y))))
+                {
+                    DTP.Add(candle.MaxPoint);
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMax.ellipse == null) candle.CreateEllipse(candle.MaxPoint);
+
+                    return true;
+                }
+            }
+            else if (extremum is "min" && Direction is "Up")
+            {
+                if (FallPoint.Y == 0 && candle.MinPoint.Y >= CutOffPoint.Y)
+                {
+                    FallPoint = candle.MinPoint;
+
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMin.ellipse == null) candle.CreateEllipse(candle.MinPoint);
+
+                    return true;
+                }
+                else if (!DTP.Contains(candle.MinPoint) &&
+                        ((candle.MinPoint.X != CutOffPoint.X && candle.MinPoint.Y == CutOffPoint.Y) ||
+                         (candle.MinPoint.X != FallPoint.X && candle.MinPoint.Y == FallPoint.Y)))
+                {
+                    DTP.Add(candle.MinPoint);
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMin.ellipse == null) candle.CreateEllipse(candle.MinPoint);
+
+                    return true;
+                }
+            }
+
+            else if (extremum is "min" && Direction is "Dn")
+            {
+                if (Tsp.X == 0 && candle.MinPoint.X != CutOffPoint.X && candle.MinPoint.X != FallPoint.X &&
+                        candle.MinPoint.Y > CutOffPoint.Y && candle.MinPoint.Y > FallPoint.Y)
+                {
+                    Tsp = candle.MinPoint;
+
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMin.ellipse == null) candle.CreateEllipse(candle.MinPoint);
+
+                    return true;
+                }
+                else if (!DTP.Contains(candle.MinPoint) && ((candle.MinPoint.X != Tsp.X && candle.MinPoint.Y == Tsp.Y) ||
+                         (candle.MinPoint.Y > Tsp.Y && (candle.MaxPoint.Y == CutOffPoint.Y || candle.MaxPoint.Y == FallPoint.Y))))
+                {
+                    DTP.Add(candle.MinPoint);
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMin.ellipse == null) candle.CreateEllipse(candle.MinPoint);
+
+                    return true;
+                }
+            }
+            else if (extremum is "max" && Direction is "Dn")
+            {
+                if (FallPoint.Y == 0 && candle.MaxPoint.Y <= CutOffPoint.Y)
+                {
+                    FallPoint = candle.MaxPoint;
+
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMax.ellipse == null) candle.CreateEllipse(candle.MaxPoint);
+
+                    return true;
+                }
+                else if (!DTP.Contains(candle.MaxPoint) &&
+                        ((candle.MaxPoint.X != CutOffPoint.X && candle.MaxPoint.Y == CutOffPoint.Y) ||
+                         (candle.MaxPoint.X != FallPoint.X && candle.MaxPoint.Y == FallPoint.Y)))
+                {
+                    DTP.Add(candle.MaxPoint);
+                    CandlesId.Add(candle.id);
+
+                    if (candle.ViewMax.ellipse == null) candle.CreateEllipse(candle.MaxPoint);
+
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

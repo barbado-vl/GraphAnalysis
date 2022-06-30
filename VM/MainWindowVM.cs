@@ -1092,7 +1092,7 @@ namespace GraphAnalysis.VM
 
         internal void AddDeletePointToPeak(object sender, RoutedEventArgs e)
         {
-            if (SelectedObject.Count == 1 && Peaks.Any() && TLines.Count == 0)
+            if (SelectedObject.Count == 1 && Peaks.Any() && InputLine is "max" or "min")
             {
                 foreach (object elelemnt in MW.myCanvas.Children.OfType<TextBlock>())
                 {
@@ -1103,7 +1103,7 @@ namespace GraphAnalysis.VM
                 }
                 StatusMessage = "ЗАПРОС: выберете пик";
             }
-            else StatusMessage = "ВНИМАНИЕ: выделено более одной свечки, или не посчитаны пики, или вы уже посчитали линии";
+            else StatusMessage = "ВНИМАНИЕ: выделено более одной свечки, или не посчитаны пики, или надо в поле ввода Input указать max / min";
         }
         internal void ClickToPeakToAddDeletePoint(object sender, RoutedEventArgs e) 
         {
@@ -1127,23 +1127,19 @@ namespace GraphAnalysis.VM
 
                 UnSelectChild(polygon, new RoutedEventArgs());
 
-                if (peak.DeletePoint(candle))
+                if (peak.AdePoint(candle, InputLine))
+                    StatusMessage = "точка добавлена";
+                else if (peak.DeletePoint(candle, InputLine))
                 {
                     HideExtremumOfCandle(candle);
 
                     StatusMessage = "точка удалена";
                 }
-                else
-                {
-                    if (peak.AdePoint(candle))
-                        StatusMessage = "точка добавлена";
-                    else
-                        StatusMessage = "ВНИМАНИЕ: выбранная свечка не соответсвует ни одной точке пика, удалить/добавить её пику не удалось, добавте FallPoint";
-                }
+                else StatusMessage = "ВНИМАНИЕ: выбранная свечка не соответсвует ни одной точке пика, удалить/добавить её пику не удалось, добавте FallPoint";
 
                 SelectChild(textblock, new RoutedEventArgs());
             }
-            else StatusMessage = "ВНИМАНИЕ: условие для добавления / удаления точки пику не выполнено";
+            else StatusMessage = "ВНИМАНИЕ: условие для добавления/удаления точки пику не выполнено";
         }
 
         internal void CreatePeak(object sender, EventArgs e)
