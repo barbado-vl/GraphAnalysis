@@ -49,17 +49,25 @@ namespace GraphAnalysis.VM
             {
                 foreach (Peak peak in seriesPeaks)
                 {
-                    if (peak.Tsp == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
-                    if (peak.Tsp == candle.MinPoint) minPoints.Add(candle.MinPoint);
+                    if (maxPoints.Contains(candle.MaxPoint))
+                        break;
+                    else
+                    {
+                        if (peak.Tsp == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
+                        if (peak.CutOffPoint == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
+                        if (peak.FallPoint == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
+                        if (peak.DTP.Contains(candle.MaxPoint) || peak.Np.Contains(candle.MaxPoint)) maxPoints.Add(candle.MaxPoint);
+                    }
 
-                    if (peak.CutOffPoint == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
-                    if (peak.CutOffPoint == candle.MinPoint) minPoints.Add(candle.MinPoint);
-
-                    if (peak.FallPoint == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
-                    if (peak.FallPoint == candle.MinPoint) minPoints.Add(candle.MinPoint);
-
-                    if (peak.DTP.Contains(candle.MaxPoint) || peak.Np.Contains(candle.MaxPoint)) maxPoints.Add(candle.MaxPoint);
-                    if (peak.DTP.Contains(candle.MinPoint) || peak.Np.Contains(candle.MinPoint)) minPoints.Add(candle.MinPoint);
+                    if (minPoints.Contains(candle.MinPoint))
+                        break;
+                    else
+                    {
+                        if (peak.Tsp == candle.MinPoint) minPoints.Add(candle.MinPoint);
+                        if (peak.CutOffPoint == candle.MinPoint) minPoints.Add(candle.MinPoint);
+                        if (peak.FallPoint == candle.MinPoint) minPoints.Add(candle.MinPoint);
+                        if (peak.DTP.Contains(candle.MinPoint) || peak.Np.Contains(candle.MinPoint)) minPoints.Add(candle.MinPoint);
+                    }
                 }
             }
 
