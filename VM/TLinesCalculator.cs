@@ -45,10 +45,22 @@ namespace GraphAnalysis.VM
 
             basecandles = basecandles.OrderBy(a => a.MaxPoint.X).ToList();
 
-            foreach (Candle item in basecandles)
+            foreach (Candle candle in basecandles)
             {
-                if (item.ViewMax.point.X != 0) maxPoints.Add(item.ViewMax.point);
-                if (item.ViewMin.point.X != 0) minPoints.Add(item.ViewMin.point);
+                foreach (Peak peak in seriesPeaks)
+                {
+                    if (peak.Tsp == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
+                    if (peak.Tsp == candle.MinPoint) minPoints.Add(candle.MinPoint);
+
+                    if (peak.CutOffPoint == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
+                    if (peak.CutOffPoint == candle.MinPoint) minPoints.Add(candle.MinPoint);
+
+                    if (peak.FallPoint == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
+                    if (peak.FallPoint == candle.MinPoint) minPoints.Add(candle.MinPoint);
+
+                    if (peak.DTP.Contains(candle.MaxPoint) || peak.Np.Contains(candle.MaxPoint)) maxPoints.Add(candle.MaxPoint);
+                    if (peak.DTP.Contains(candle.MinPoint) || peak.Np.Contains(candle.MinPoint)) minPoints.Add(candle.MinPoint);
+                }
             }
 
             if (Direction is Up)
@@ -112,6 +124,7 @@ namespace GraphAnalysis.VM
                 return y >= Breakdown && y < heightCanvas + (heightCanvas / 2);
             }
         }
+
 
         #region Расчет Истории касаний линии
 
