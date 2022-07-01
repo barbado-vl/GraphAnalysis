@@ -38,8 +38,8 @@ namespace GraphAnalysis.DataModel
 
             Way = 2;
 
-            NextProximity = new string[4];
-            PreviousProximity = new string[4];
+            NextProximity = pretline.NextProximity;
+            PreviousProximity = pretline.PreviousProximity;
         }
 
         public Point FirstPoint { get; set; }

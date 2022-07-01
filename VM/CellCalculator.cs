@@ -14,6 +14,15 @@ namespace GraphAnalysis.VM
 
             double border = breakdown;
 
+
+            // Обнулим близость, нужно для повторного пересчета
+            foreach (TLine tline in tlines)
+            {
+                Array.Clear(tline.NextProximity, 0, 4);
+                Array.Clear(tline.PreviousProximity, 0, 4);
+            }
+
+
             for (int ind = 0; ind < candleway.Count; ind++)
             {
                 // Считаем вторую точку и сортируем, считаем border
@@ -49,7 +58,9 @@ namespace GraphAnalysis.VM
                     {
                         if (!touchcells.Contains(tline))
                         {
-                            ProximityMethod(tline, tlines, nL, direction, startpoint);
+                            ProximityMethod(tline, tlines, nL, startpoint);
+
+                            DynamicsPrevious(tline, tlines, nL, startpoint); // Ошибка 29.06.22 
 
                             touchcells.Add(tline);
                         }
@@ -66,7 +77,7 @@ namespace GraphAnalysis.VM
                                 }
                             }
 
-                            ProximityMethod(newtline, tlines, nL, direction, startpoint);
+                            ProximityMethod(newtline, tlines, nL, startpoint);
 
                             touchcells.Add(newtline);
                         }
@@ -75,7 +86,7 @@ namespace GraphAnalysis.VM
             }
             touchcells.Add(tlines[^1]);
 
-            // Проблема 1-ой линии
+            // Проблема 1-ой линии (есть только следующая, а надо учесть "-" близость и "б/д" близость)
 
             foreach (TLine cell in touchcells)
             {
@@ -107,86 +118,134 @@ namespace GraphAnalysis.VM
             return false;
         }
 
-        private static void ProximityMethod(TLine tline, List<TLine> tlines, int ind, string direction, double startpoint)
+        private static void ProximityMethod(TLine tline, List<TLine> tlines, int nL, double startpoint)
         {
             double proximity;
 
             // base
-
-            proximity = direction is "Up"
-                        ? (tline.SecondPoint.Y - tlines[ind + 1].SecondPoint.Y) / (startpoint - tline.SecondPoint.Y) * 100
-                        : (tlines[ind + 1].SecondPoint.Y - tline.SecondPoint.Y) / (tline.SecondPoint.Y - startpoint) * 100;
-            proximity = Math.Round(proximity, 2);
+            proximity = ProximityCalculate(startpoint, tline.SecondPoint.Y, tlines[nL + 1].SecondPoint.Y);
 
             tline.NextProximity[0] = ProximityRepresentResult(proximity, tline.NextProximity[0]);
-            tlines[ind + 1].PreviousProximity[0] = ProximityRepresentResult(proximity, tlines[ind + 1].PreviousProximity[0]);
+            tlines[nL + 1].PreviousProximity[0] = ProximityRepresentResult(proximity, tlines[nL + 1].PreviousProximity[0]);
 
             // MainType
-
-            for (int n = ind + 1; n < tlines.Count; n++)
+            for (int n = nL + 1; n < tlines.Count; n++)
             {
                 if (tline.MainType == tlines[n].MainType)
                 {
-                    proximity = direction is "Up"
-                        ? (tline.SecondPoint.Y - tlines[n].SecondPoint.Y) / (startpoint - tline.SecondPoint.Y) * 100
-                        : (tlines[n].SecondPoint.Y - tline.SecondPoint.Y) / (tline.SecondPoint.Y - startpoint) * 100;
-                    proximity = Math.Round(proximity, 2);
+                    proximity = ProximityCalculate(startpoint, tline.SecondPoint.Y, tlines[n].SecondPoint.Y);
 
                     tline.NextProximity[1] = ProximityRepresentResult(proximity, tline.NextProximity[1]);
                     tlines[n].PreviousProximity[1] = ProximityRepresentResult(proximity, tlines[n].PreviousProximity[1]);
-
                     break;
                 }
             }
 
             // CommonType
-
             if (tline.CommonType)
             {
-                for (int n = ind + 1; n < tlines.Count; n++)
+                for (int n = nL + 1; n < tlines.Count; n++)
                 {
                     if (tlines[n].CommonType)
                     {
-                        proximity = direction is "Up"
-                            ? (tline.SecondPoint.Y - tlines[n].SecondPoint.Y) / (startpoint - tline.SecondPoint.Y) * 100
-                            : (tlines[n].SecondPoint.Y - tline.SecondPoint.Y) / (tline.SecondPoint.Y - startpoint) * 100;
-                        proximity = Math.Round(proximity, 2);
+                        proximity = ProximityCalculate(startpoint, tline.SecondPoint.Y, tlines[n].SecondPoint.Y);
 
                         tline.NextProximity[2] = ProximityRepresentResult(proximity, tline.NextProximity[1]);
                         tlines[n].PreviousProximity[2] = ProximityRepresentResult(proximity, tlines[n].PreviousProximity[1]);
-
                         break;
                     }
                 }
             }
 
             // HistoryType
-
             double tlhis = tline.HistoryType.Last().ToString() is "п" ? 2.5 : double.Parse(tline.HistoryType.Split("С").Last());
 
             if (tlhis > 2)
             {
-                for (int n = ind + 1; n < tlines.Count; n++)
+                for (int n = nL + 1; n < tlines.Count; n++)
                 {
                     double nexthis = tlines[n].HistoryType.Last().ToString() is "п" ? 2.5 : double.Parse(tlines[n].HistoryType.Split("С").Last());
 
                     if (nexthis > 2)
                     {
-                        proximity = direction is "Up"
-                            ? (tline.SecondPoint.Y - tlines[n].SecondPoint.Y) / (startpoint - tline.SecondPoint.Y) * 100
-                            : (tlines[n].SecondPoint.Y - tline.SecondPoint.Y) / (tline.SecondPoint.Y - startpoint) * 100;
-                        proximity = Math.Round(proximity, 2);
+                        proximity = ProximityCalculate(startpoint, tline.SecondPoint.Y, tlines[n].SecondPoint.Y);
 
                         tline.NextProximity[3] = ProximityRepresentResult(proximity, tline.NextProximity[3]);
                         tlines[n].PreviousProximity[3] = ProximityRepresentResult(proximity, tlines[n].PreviousProximity[3]);
+                        break;
+                    }
+                }
+            }
+        }
 
+        private static void DynamicsPrevious(TLine tline, List<TLine> tlines, int nL, double startpoint)
+        {
+            double proximity;
+
+            // base
+            if (nL > 0 && tline.PreviousProximity[0] == null)
+            {
+                proximity = ProximityCalculate(startpoint, tlines[nL - 1].SecondPoint.Y, tline.SecondPoint.Y);
+
+                tline.PreviousProximity[0] = ProximityRepresentResult(proximity, tline.PreviousProximity[0]);
+            }
+
+            // MainType
+            if (tline.PreviousProximity[1] == null)
+            {
+                for (int n = nL - 1; n >= 0; n--)
+                {
+                    if (tline.MainType == tlines[n].MainType)
+                    {
+                        proximity = ProximityCalculate(startpoint, tlines[n].SecondPoint.Y, tline.SecondPoint.Y);
+
+                        tline.PreviousProximity[1] = ProximityRepresentResult(proximity, tline.PreviousProximity[1]);
                         break;
                     }
                 }
             }
 
+            // CommonType
+            if (tline.CommonType && tline.PreviousProximity[2] == null)
+            {
+                for (int n = nL - 1; n >= 0; n--)
+                {
+                    if (tlines[n].CommonType)
+                    {
+                        proximity = ProximityCalculate(startpoint, tlines[n].SecondPoint.Y, tline.SecondPoint.Y);
+
+                        tline.PreviousProximity[2] = ProximityRepresentResult(proximity, tline.PreviousProximity[2]);
+                        break;
+                    }
+                }
+            }
+
+            // HistoryType
+            double cellhis = tline.HistoryType.Last().ToString() is "п" ? 2.5 : double.Parse(tline.HistoryType.Split("С").Last());
+
+            if (cellhis > 2 && tline.PreviousProximity[3] == null)
+            {
+                for (int n = nL - 1; n >= 0; n--)
+                {
+                    double nexthis = tlines[n].HistoryType.Last().ToString() is "п" ? 2.5 : double.Parse(tlines[n].HistoryType.Split("С").Last());
+
+                    if (nexthis > 2)
+                    {
+                        proximity = ProximityCalculate(startpoint, tlines[n].SecondPoint.Y, tline.SecondPoint.Y);
+
+                        tline.PreviousProximity[3] = ProximityRepresentResult(proximity, tline.PreviousProximity[3]);
+                        break;
+                    }
+                }
+            }
 
         }
+
+        private static double ProximityCalculate(double startpoint, double firsthPoint, double secondPoint)
+        {
+            return Math.Round(Math.Abs(firsthPoint - secondPoint) / Math.Abs(startpoint - firsthPoint) * 100, 2);
+        }
+
         private static string ProximityRepresentResult(double proximity, string current)
         {
             string s = "";

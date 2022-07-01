@@ -1,6 +1,4 @@
-﻿using GraphAnalysis.VM;
-using System.Linq;
-using System.Threading;
+﻿using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

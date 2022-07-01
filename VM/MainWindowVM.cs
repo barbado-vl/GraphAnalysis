@@ -798,13 +798,14 @@ namespace GraphAnalysis.VM
                 {
                     Line line = (Line)sender;
 
-                    if (SelectedObject.Count == 0 || line.Uid is "breakdown" or "zone1314" or "slice" ||
+                    if (SelectedObject.Count == 0 || line.Uid is "breakdown" or "zone1314" or "slice" or "random" ||
                        (line.Uid.Split("_").First() is "line" && SelectedObject[0].Uid.Split("_").First() is "line"))
                     {
                         line.MouseLeftButtonDown -= SelectChild;
                         line.MouseLeftButtonDown += UnSelectChild;
 
-                        if (line.Uid.Split("_").First() is "line") line.MouseRightButtonDown += TLineCustomMenu;
+                        if (line.Uid.Split("_").First() is "line")
+                            line.MouseRightButtonDown += TLineCustomMenu;
 
                         line.StrokeThickness = 2;
 
@@ -1088,6 +1089,39 @@ namespace GraphAnalysis.VM
                 MW.myCanvas.Children.Add(horisont);
             }
             else StatusMessage = "ВНИМАНИЕ: для расчета требуется выделить либо один пик, либо одну свечку, экстремум которой является точкой пика, плюс необходимо указать направление расчетов в поле ввода Up/Dn, пики должны быть рассчитаны";
+        }
+
+        internal void RandomLineMethod(object sender, RoutedEventArgs e)
+        {
+            if (Direction is "Up" or "Dn" && SelectedObject.Count == 1 && SelectedObject[0].GetType() == typeof(Polygon))
+            {
+                Polygon polygon = (Polygon)SelectedObject[0];
+
+                Candle candle = Candles.First(a => a.id == polygon.Uid);
+
+                Line random = new();
+
+                if (Direction is "Up")
+                {
+                    random.Y1 = candle.MaxPoint.Y;
+                    random.Y2 = candle.MaxPoint.Y;
+                }
+                else
+                {
+                    random.Y1 = candle.MinPoint.Y;
+                    random.Y2 = candle.MinPoint.Y;
+                }
+                random.X1 = candle.MinPoint.X - 20;
+                random.X2 = WidthCanvas - 20;
+                random.Stroke = Brushes.LightBlue;
+                random.StrokeThickness = 1;
+                random.Uid = "random";
+
+                random.MouseLeftButtonDown += SelectChild;
+
+                MW.myCanvas.Children.Add(random);
+            }
+            else StatusMessage = "ВНИМАНИЕ: выделите 1 свечку, укажите Up / Dn в поле ввода Up/Dn";
         }
 
         internal void AddDeletePointToPeak(object sender, RoutedEventArgs e)
@@ -1566,6 +1600,19 @@ namespace GraphAnalysis.VM
                 }
             }
         }
+        internal void Select_AllTLine(object sender, RoutedEventArgs e)
+        {
+            for (int n = SelectedObject.Count - 1; n >= 0; n--)
+            {
+                UnSelectChild(SelectedObject[n], new RoutedEventArgs());
+            }
+
+            foreach (Line line in MW.myCanvas.Children.OfType<Line>())
+            {
+                if (line.Uid.Split("_").First() is "line")
+                    SelectChild(line, new RoutedEventArgs());
+            }
+        }
 
         internal void HideNotSelectedShowAll(object sender, RoutedEventArgs e)
         {
@@ -1683,6 +1730,9 @@ namespace GraphAnalysis.VM
             MenuItem BreakdownMenuItem = new() { Header = "Breakdown Dtp/Np" };
             BreakdownMenuItem.Click += BreakdownMethod;
 
+            MenuItem RandomLineMenuItem = new() { Header = "Add Line" };
+            RandomLineMenuItem.Click += RandomLineMethod;
+
             MenuItem AddDeletePointToPeakMenuItem = new() { Header = "Add/Delete Point to Peak" };
             AddDeletePointToPeakMenuItem.Click += AddDeletePointToPeak;
 
@@ -1695,9 +1745,11 @@ namespace GraphAnalysis.VM
             MenuItem DeleteCandleMenuItem = new() { Header = "Delete Candle" };
             DeleteCandleMenuItem.Click += DeleteUIElement;
 
+
             ContextMenu RightClickMenu = new();
 
             RightClickMenu.Items.Add(BreakdownMenuItem);
+            RightClickMenu.Items.Add(RandomLineMenuItem);
             RightClickMenu.Items.Add(AddDeletePointToPeakMenuItem);
             RightClickMenu.Items.Add(CreatePeakMenuItem);
             RightClickMenu.Items.Add(VectorLineMenuItem);
@@ -1757,11 +1809,15 @@ namespace GraphAnalysis.VM
             CommonTypeMenuItem.Click += Select_CommonType;
             MenuItem VectorTypeMenuItem = new() { Header = "Vector" };
             VectorTypeMenuItem.Click += Select_VectorType;
+            MenuItem AllTLineMenuItem = new() { Header = "All" };
+            AllTLineMenuItem.Click += Select_AllTLine;
 
             MenuSelectTypeMenuItem.Items.Add(MainTypeMenuItem);
             MenuSelectTypeMenuItem.Items.Add(HistoryTypeMenuItem);
             MenuSelectTypeMenuItem.Items.Add(CommonTypeMenuItem);
             MenuSelectTypeMenuItem.Items.Add(VectorTypeMenuItem);
+            MenuSelectTypeMenuItem.Items.Add(AllTLineMenuItem);
+
 
             MenuItem HideNotSelectedShowAllMenuItem = new() { Header = "Hide not Selected / Show All" };
             HideNotSelectedShowAllMenuItem.Click += HideNotSelectedShowAll;
@@ -1774,6 +1830,7 @@ namespace GraphAnalysis.VM
 
             MenuItem DeleteTLineMenuItem = new() { Header = "Delete TLine" };
             DeleteTLineMenuItem.Click += DeleteUIElement;
+
 
             ContextMenu RightClickMenu = new();
 
