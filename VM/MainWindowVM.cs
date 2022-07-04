@@ -1448,6 +1448,42 @@ namespace GraphAnalysis.VM
             StatusMessage = "выделен точки по выделенным пикам";
         }
 
+        internal void ShowPointsOfPeak(object sender, RoutedEventArgs e)
+        {
+            if (SelectedObject.Count == 1)
+            {
+                Peak peak = Peaks.First(a => a.Id == SelectedObject[0].Uid);
+                List<Point> points = new();
+                string record = "";
+
+                points.Add(peak.CutOffPoint);
+                points.Add(peak.Tsp);
+                points.Add(peak.FallPoint);
+                foreach (Point point in peak.DTP)
+                {
+                    points.Add(point);
+                }
+                foreach (Point point in peak.Np)
+                {
+                    points.Add(point);
+                }
+                points = points.OrderBy(a => a.X).ToList();
+
+                foreach (Point point in points)
+                {
+                    if (point == peak.CutOffPoint) record += "Cut: " + peak.CutOffPoint.Y.ToString() + "; ";
+                    else if (point == peak.FallPoint) record += "Fall: " + peak.FallPoint.Y.ToString() + "; ";
+                    else if (point == peak.Tsp) record += "Tsp: " + peak.Tsp.Y.ToString() + "; ";
+                    else if (peak.DTP.Contains(point)) record += "Dtp: " + peak.DTP.First(a => a.X == point.X).Y.ToString() + "; ";
+                    else if (peak.Np.Contains(point)) record += "Np: " + peak.Np.First(a => a.X == point.X).Y.ToString() + "; ";
+                }
+
+                RecordWindow showpoints = new();
+                showpoints.ShowPointsOfPeak(record);
+                showpoints.Show();
+            }
+            else StatusMessage = "ВНИМАНИЕ: выделенно больше 1 пика";
+        }
 
         // Line/TLine методы контекстного меню 
 
@@ -1772,8 +1808,12 @@ namespace GraphAnalysis.VM
             MenuItem SelectPointPeakOrSeriesPeaksMenuItem = new() { Header = "Select Point Peak or Series Peaks" };
             SelectPointPeakOrSeriesPeaksMenuItem.Click += SelectPointFromPeak;
 
+            MenuItem ShowPointsOfPeakMenuItem = new() { Header = "Show Points" };
+            ShowPointsOfPeakMenuItem.Click += ShowPointsOfPeak;
+
             MenuItem DeletePeakMenuItem = new() { Header = "Delete Peak" };
             DeletePeakMenuItem.Click += DeleteUIElement;
+
 
             ContextMenu RightClickMenu = new();
 
@@ -1781,6 +1821,7 @@ namespace GraphAnalysis.VM
             RightClickMenu.Items.Add(AddOrDeletePeakToSeriesPeaksMenuItem);
             RightClickMenu.Items.Add(SelectSeriesPeakMenuItem);
             RightClickMenu.Items.Add(SelectPointPeakOrSeriesPeaksMenuItem);
+            RightClickMenu.Items.Add(ShowPointsOfPeakMenuItem);
             RightClickMenu.Items.Add(DeletePeakMenuItem);
 
             RightClickMenu.IsOpen = true;

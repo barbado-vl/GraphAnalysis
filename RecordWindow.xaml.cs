@@ -130,5 +130,16 @@ namespace GraphAnalysis
             }
 
         }
+
+        public void ShowPointsOfPeak(string stringpoints)
+        {
+            TextRange rangeOfbaseProx = new(docBox.Document.ContentEnd, docBox.Document.ContentEnd);
+
+            rangeOfbaseProx.Text = stringpoints;
+
+            rangeOfbaseProx.ApplyPropertyValue(TextElement.FontFamilyProperty, new FontFamily("Calibri"));
+            rangeOfbaseProx.ApplyPropertyValue(TextElement.ForegroundProperty, Brushes.Black);
+            rangeOfbaseProx.ApplyPropertyValue(Inline.BaselineAlignmentProperty, BaselineAlignment.Baseline);
+        }
     }
 }

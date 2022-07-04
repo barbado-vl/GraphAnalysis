@@ -207,37 +207,21 @@ namespace GraphAnalysis.DataModel
 
         private void SetNp(List<Candle> targetcandles)
         {
-            double hill = CutOffPoint.Y;
-
             for (int n = 1; n < targetcandles.Count - 1; n++)
             {
                 if (Direction is "Up" && targetcandles[n].MinPoint.Y > CutOffPoint.Y)
                 {
-                    double np_check = (targetcandles[n].MinPoint.Y - Tsp.Y) * 0.117;
+                    Np.Add(targetcandles[n].MinPoint);
+                    CandlesId.Add(targetcandles[n].id);
 
-                    if (targetcandles[n].MinPoint.Y - hill <= np_check)
-                    {
-                        Np.Add(targetcandles[n].MinPoint);
-                        CandlesId.Add(targetcandles[n].id);
-
-                        targetcandles[n].CreateEllipse(targetcandles[n].MinPoint);
-
-                        hill = targetcandles[n].MinPoint.Y;
-                    }
+                    targetcandles[n].CreateEllipse(targetcandles[n].MinPoint);
                 }
                 else if (Direction is "Dn" && targetcandles[n].MaxPoint.Y < CutOffPoint.Y)
                 {
-                    double np_check = (Tsp.Y - targetcandles[n].MaxPoint.Y) * 0.117;
+                    Np.Add(targetcandles[n].MaxPoint);
+                    CandlesId.Add(targetcandles[n].id);
 
-                    if (hill - targetcandles[n].MaxPoint.Y <= np_check)
-                    {
-                        Np.Add(targetcandles[n].MaxPoint);
-                        CandlesId.Add(targetcandles[n].id);
-
-                        targetcandles[n].CreateEllipse(targetcandles[n].MaxPoint);
-
-                        hill = targetcandles[n].MaxPoint.Y;
-                    }
+                    targetcandles[n].CreateEllipse(targetcandles[n].MaxPoint);
                 }
             }
 
