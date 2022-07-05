@@ -49,9 +49,7 @@ namespace GraphAnalysis.VM
             {
                 foreach (Peak peak in seriesPeaks)
                 {
-                    if (maxPoints.Contains(candle.MaxPoint))
-                        break;
-                    else
+                    if (!maxPoints.Contains(candle.MaxPoint))
                     {
                         if (peak.Tsp == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
                         if (peak.CutOffPoint == candle.MaxPoint) maxPoints.Add(candle.MaxPoint);
@@ -59,9 +57,7 @@ namespace GraphAnalysis.VM
                         if (peak.DTP.Contains(candle.MaxPoint) || peak.Np.Contains(candle.MaxPoint)) maxPoints.Add(candle.MaxPoint);
                     }
 
-                    if (minPoints.Contains(candle.MinPoint))
-                        break;
-                    else
+                    if (!minPoints.Contains(candle.MinPoint))
                     {
                         if (peak.Tsp == candle.MinPoint) minPoints.Add(candle.MinPoint);
                         if (peak.CutOffPoint == candle.MinPoint) minPoints.Add(candle.MinPoint);

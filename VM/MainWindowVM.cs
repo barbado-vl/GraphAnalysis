@@ -1151,7 +1151,7 @@ namespace GraphAnalysis.VM
                 }
             }
 
-            if (sender.GetType() == typeof(TextBlock))
+            if (sender.GetType() == typeof(TextBlock) && SelectedObject.Count == 1 && SelectedObject[0].GetType() == typeof(Polygon))
             {
                 TextBlock textblock = (TextBlock)sender;
                 Polygon polygon = (Polygon)SelectedObject[0];
