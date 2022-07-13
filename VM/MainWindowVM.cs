@@ -1033,8 +1033,19 @@ namespace GraphAnalysis.VM
                 {
                     Peak peak = (Peak)sender;
 
-                    Breakdown.BD = Direction == peak.Direction ? peak.Tsp : peak.CutOffPoint;
                     Breakdown.P = peak;
+
+                    if (Direction == peak.Direction)
+                        Breakdown.BD = peak.Tsp;
+                    else
+                    {
+                        if (!peak.Np.Any())
+                            Breakdown.BD = peak.CutOffPoint;
+                        else
+                        {
+                            Breakdown.BD = peak.Direction is "Up" ? peak.Np.OrderBy(a => a.Y).Last() : peak.Np.OrderBy(a => a.Y).First();
+                        }
+                    }
                 }
                 else
                 {
