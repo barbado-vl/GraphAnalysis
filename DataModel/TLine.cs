@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 
 
@@ -6,6 +7,7 @@ namespace GraphAnalysis.DataModel
 {
     public class TLine
     {
+        // TLinesCalculator
         public TLine(string maintype, Point firstpoint, Point secondpoint)
         {
             MainType = maintype;
@@ -21,6 +23,7 @@ namespace GraphAnalysis.DataModel
             PreviousProximity = new string[4];
         }
 
+        // copy cell
         public TLine(TLine pretline)
         {
             FirstPoint = pretline.FirstPoint;
@@ -40,6 +43,34 @@ namespace GraphAnalysis.DataModel
 
             NextProximity = pretline.NextProximity;
             PreviousProximity = pretline.PreviousProximity;
+        }
+
+        // handmade
+        public TLine(string direction, string[] inputdata, Candle firstC, Candle secondC)
+        {
+            Point firstpoint = inputdata[0] is "max" ? firstC.MaxPoint : firstC.MinPoint;
+            Point secondpoint = inputdata[1] is "max" ? secondC.MaxPoint : secondC.MinPoint;
+
+            FirstPoint = firstpoint;
+            k = (firstpoint.Y - secondpoint.Y) / (firstpoint.X - secondpoint.X);
+            b = firstpoint.Y - k * firstpoint.X;
+
+            if ((direction is "Up" && inputdata[0] is "max" && inputdata[1] is "max")
+             || (direction is "Dn" && inputdata[0] is "min" && inputdata[1] is "min"))
+                MainType = "Лн";
+            else if ((direction is "Up" && inputdata[0] is "min" && inputdata[1] is "min")
+                  || (direction is "Dn" && inputdata[0] is "max" && inputdata[1] is "max"))
+                MainType = "Ор";
+            else if ((inputdata[0] is "max" && inputdata[1] is "min")
+                  || (inputdata[0] is "min" && inputdata[1] is "max"))
+                MainType = "Рэ";
+
+            HistoryType = inputdata.Length > 2 ? inputdata[2] : "";
+            CommonType = false;
+            VectorType = "";
+
+            NextProximity = new string[4];
+            PreviousProximity = new string[4];
         }
 
         public Point FirstPoint { get; set; }

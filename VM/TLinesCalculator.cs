@@ -11,7 +11,7 @@ namespace GraphAnalysis.VM
         private const string Up = "Up";
         private const string Dn = "Dn";
 
-        private readonly double widthCanvas;
+        private readonly double borderX;
         private readonly double heightCanvas;
         private readonly double Breakdown;
 
@@ -27,7 +27,7 @@ namespace GraphAnalysis.VM
 
             Direction = direction;
 
-            widthCanvas = width;
+            borderX = width;
             heightCanvas = height;
 
             Breakdown = breakdown == 0 ? Direction == seriesPeaks[^1].Direction ? seriesPeaks[^1].Tsp.Y : seriesPeaks[^1].CutOffPoint.Y : breakdown;
@@ -117,7 +117,7 @@ namespace GraphAnalysis.VM
 
         private bool FilterOfLine(TLine line)
         {
-            double y = line.CalculateY(widthCanvas);
+            double y = line.CalculateY(borderX);
 
             if (Direction is Up)
             {

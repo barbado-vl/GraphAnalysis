@@ -454,6 +454,7 @@ namespace GraphAnalysis.VM
             {
                 if (Direction is "Up" or "Dn")
                 {
+                    // отбор свечек по точкам
                     List<Candle> basecandles = new();
                     foreach (Polygon item in SelectedObject)
                     {
@@ -461,6 +462,29 @@ namespace GraphAnalysis.VM
                     }
                     basecandles = basecandles.OrderBy(a => a.MaxPoint.X).ToList();
 
+                    // расчет X границы
+                    double borderX = WidthCanvas;
+
+                    if (Breakdown.BD.Y != 0)
+                    {
+                        int ind = Candles.IndexOf(Candles.First(a => a.MaxPoint.X == Breakdown.BD.X));
+
+                        for (int n = ind; n < Candles.Count; n++)
+                        {
+                            if (Direction is "Up" && Candles[n].MaxPoint.Y <= Breakdown.BD.Y)
+                            {
+                                borderX = Candles[n].MaxPoint.X;
+                                break;
+                            }
+                            if (Direction is "Dn" && Candles[n].MinPoint.Y >= Breakdown.BD.Y)
+                            {
+                                borderX = Candles[n].MinPoint.X;
+                                break;
+                            }
+                        }
+                    }
+
+                    // проверка
                     List<Candle> rowcandles = new();
                     foreach (Peak peak in SeriesPeaks)
                     {
@@ -479,13 +503,14 @@ namespace GraphAnalysis.VM
                         else coincidenceofpoint = false; break;
                     }
 
+                    // расчеты
                     if (coincidenceofpoint)
                     {
                         if (rowcandles[0].MaxPoint.X < basecandles[0].MaxPoint.X)
                         {
                             ClearData("newlines");
 
-                            TLinesCalculator calculate = new(SeriesPeaks, Direction, WidthCanvas, HeightCanvas, Breakdown.BD.Y);
+                            TLinesCalculator calculate = new(SeriesPeaks, Direction, borderX, HeightCanvas, Breakdown.BD.Y);
                             TLines = calculate.CalculateTLines(basecandles);
 
                             foreach (TLine tline in TLines)
@@ -1102,7 +1127,60 @@ namespace GraphAnalysis.VM
             else StatusMessage = "ВНИМАНИЕ: для расчета требуется выделить либо один пик, либо одну свечку, экстремум которой является точкой пика, плюс необходимо указать направление расчетов в поле ввода Up/Dn, пики должны быть рассчитаны";
         }
 
-        internal void RandomLineMethod(object sender, RoutedEventArgs e)
+        internal void CheckNp(object sender, RoutedEventArgs e)
+        {
+            if (SelectedObject.Count is 3 && InputLine is "max" or "min")
+            {
+                StatusMessage = "";
+
+                List<Candle> targetcandles = new();
+
+                for (int n = 0; n < SelectedObject.Count; n++)
+                {
+                    targetcandles.Add(Candles.First(a => a.id == SelectedObject[n].Uid));
+                }
+
+                if (InputLine is "max")
+                {
+                    double high = targetcandles[0].MaxPoint.Y < targetcandles[1].MaxPoint.Y ? targetcandles[0].MaxPoint.Y : targetcandles[1].MaxPoint.Y;
+                    double np = Math.Abs(targetcandles[0].MaxPoint.Y - targetcandles[1].MaxPoint.Y);
+
+                    if (targetcandles[2].MinPoint.Y > targetcandles[0].MinPoint.Y && targetcandles[2].MinPoint.Y > targetcandles[1].MinPoint.Y)
+                    {
+                        double move = Math.Abs(targetcandles[2].MinPoint.Y - high);
+
+                        StatusMessage += "Np: " + np.ToString() + "/" + move.ToString() + "=" + Math.Round((np / move), 3).ToString() + ".   ";
+                    }
+                    if (targetcandles[2].MaxPoint.Y < targetcandles[0].MaxPoint.Y && targetcandles[2].MaxPoint.Y < targetcandles[1].MaxPoint.Y)
+                    {
+                        double move = Math.Abs(targetcandles[2].MaxPoint.Y - high);
+
+                        StatusMessage += "Npt: " + np.ToString() + "/" + move.ToString() + "=" + Math.Round((np / move), 3).ToString() + ".   ";
+                    }
+                }
+                else
+                {
+                    double low = targetcandles[0].MinPoint.Y > targetcandles[1].MinPoint.Y ? targetcandles[0].MinPoint.Y : targetcandles[1].MinPoint.Y;
+                    double np = Math.Abs(targetcandles[0].MinPoint.Y - targetcandles[1].MinPoint.Y);
+
+                    if (targetcandles[2].MaxPoint.Y < targetcandles[0].MaxPoint.Y && targetcandles[2].MaxPoint.Y < targetcandles[1].MaxPoint.Y)
+                    {
+                        double move = Math.Abs(targetcandles[2].MaxPoint.Y - low);
+
+                        StatusMessage += "Np: " + np.ToString() + "/" + move.ToString() + "=" + Math.Round((np / move), 3).ToString() + ".   ";
+                    }
+                    if (targetcandles[2].MinPoint.Y > targetcandles[0].MinPoint.Y && targetcandles[2].MinPoint.Y > targetcandles[1].MinPoint.Y)
+                    {
+                        double move = Math.Abs(targetcandles[2].MinPoint.Y - low);
+
+                        StatusMessage += "Npt: " + np.ToString() + "/" + move.ToString() + "=" + Math.Round((np / move), 3).ToString() + ".   ";
+                    }
+                }
+            }
+            else StatusMessage = "ВНИМАНИЕ: требуется выделить 3 свечки (для 2-х не считаеет), указать в поле Input экстремум  max или min, порядок выделения свечек -- сначала выделяются свечки Нп, затем свечку для расчета силы движения";
+        }
+
+        internal void OneMoreBreakdownLine(object sender, RoutedEventArgs e)
         {
             if (Direction is "Up" or "Dn" && SelectedObject.Count == 1 && SelectedObject[0].GetType() == typeof(Polygon))
             {
@@ -1133,6 +1211,54 @@ namespace GraphAnalysis.VM
                 MW.myCanvas.Children.Add(random);
             }
             else StatusMessage = "ВНИМАНИЕ: выделите 1 свечку, укажите Up / Dn в поле ввода Up/Dn";
+        }
+
+        internal void HandmadeTLine(object sender, RoutedEventArgs e)
+        {
+            string[] inputdata = InputLine.Split(' ').ToArray();
+
+            if (SelectedObject.Count is 2 && Direction is "Up" or "Dn" && inputdata.Length > 1 && inputdata[0] is "max" or "min" && inputdata[1] is "max" or "min")
+            {
+                List<Candle> targetcandles = new();
+
+                for (int n = 0; n < SelectedObject.Count; n++)
+                {
+                    targetcandles.Add(Candles.First(a => a.id == SelectedObject[n].Uid));
+                }
+                targetcandles = targetcandles.OrderBy(a => a.MaxPoint.X).ToList();
+
+                TLine tline = new(Direction, inputdata, targetcandles[0], targetcandles[1]);
+
+                tline.Id = "line_" + TLines.Count.ToString() + ": " + tline.MainType + ", " + tline.HistoryType;
+
+                TLines.Add(tline);
+
+                // выводим на Холст
+                Line line = new();
+                line.X1 = tline.FirstPoint.X;
+                line.Y1 = tline.FirstPoint.Y;
+                line.X2 = WidthCanvas;
+                line.Y2 = tline.CalculateY(WidthCanvas);
+                line.StrokeThickness = 0.5;
+                line.Uid = tline.Id;
+
+                line.MouseLeftButtonDown += SelectChild;
+
+                if (tline.MainType is "Лн")
+                    line.Stroke = Brushes.LightCoral;
+                else if (tline.MainType is "Ор")
+                {
+                    line.Stroke = Brushes.LightCoral;
+                    line.StrokeDashArray = new() { 8, 4 };
+                }
+                else if (tline.MainType is "Рэ")
+                    line.Stroke = Brushes.Black;
+
+                MW.myCanvas.Children.Add(line);
+
+                StatusMessage = tline.Id + " -- линия построена (дополнительно, можно указать историю касаний в поле Input после типа линии)";
+            }
+            else StatusMessage = "ВНИМАНИЕ: выделите только 2 свечки, в поле Up/Dn укажите направление, в поле Input укажите через пробле какие экстремумы будут взяты для построения линии, дополнительно, можно указать историю касаний";
         }
 
         internal void AddDeletePointToPeak(object sender, RoutedEventArgs e)
@@ -1777,8 +1903,14 @@ namespace GraphAnalysis.VM
             MenuItem BreakdownMenuItem = new() { Header = "Breakdown Dtp/Np" };
             BreakdownMenuItem.Click += BreakdownMethod;
 
-            MenuItem RandomLineMenuItem = new() { Header = "Add Line" };
-            RandomLineMenuItem.Click += RandomLineMethod;
+            MenuItem RandomLineMenuItem = new() { Header = "Add one more breakdown line" };
+            RandomLineMenuItem.Click += OneMoreBreakdownLine;
+
+            MenuItem HandmadeTLineMenuItem = new() { Header = "Create TLine" };
+            HandmadeTLineMenuItem.Click += HandmadeTLine;
+
+            MenuItem CheckNpMenuItem = new() { Header = "Check Np" };
+            CheckNpMenuItem.Click += CheckNp;
 
             MenuItem AddDeletePointToPeakMenuItem = new() { Header = "Add/Delete Point to Peak" };
             AddDeletePointToPeakMenuItem.Click += AddDeletePointToPeak;
@@ -1797,6 +1929,8 @@ namespace GraphAnalysis.VM
 
             RightClickMenu.Items.Add(BreakdownMenuItem);
             RightClickMenu.Items.Add(RandomLineMenuItem);
+            RightClickMenu.Items.Add(HandmadeTLineMenuItem);
+            RightClickMenu.Items.Add(CheckNpMenuItem);
             RightClickMenu.Items.Add(AddDeletePointToPeakMenuItem);
             RightClickMenu.Items.Add(CreatePeakMenuItem);
             RightClickMenu.Items.Add(VectorLineMenuItem);
