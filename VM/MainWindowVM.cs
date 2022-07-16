@@ -1062,15 +1062,14 @@ namespace GraphAnalysis.VM
 
                     if (Direction == peak.Direction)
                         Breakdown.BD = peak.Tsp;
-                    else
-                    {
-                        if (!peak.Np.Any())
-                            Breakdown.BD = peak.CutOffPoint;
-                        else
-                        {
-                            Breakdown.BD = peak.Direction is "Up" ? peak.Np.OrderBy(a => a.Y).Last() : peak.Np.OrderBy(a => a.Y).First();
-                        }
-                    }
+                    else if (InputLine is "FallPoint" && peak.FallPoint.X != 0)
+                        Breakdown.BD = peak.FallPoint;
+                    else if (peak.Np.Any())
+                        Breakdown.BD = peak.Direction is "Up" ? peak.Np.OrderBy(a => a.Y).Last()
+                                                              : peak.Np.OrderBy(a => a.Y).First();
+                    else Breakdown.BD = peak.CutOffPoint;
+
+                    StatusMessage = "ЗАМЕТКА: Tsp - при совпадении направления пика с направлением расчетов линий; указать FallPoint в поле ввода Input - для крайнего пика; Np или CutOffPoint - по умолчанию";
                 }
                 else
                 {
