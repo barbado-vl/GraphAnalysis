@@ -195,6 +195,7 @@ namespace GraphAnalysis.VM
                 Peaks.Clear();
                 SeriesPeaks.Clear();
                 TLines.Clear();
+                Breakdown = new(new(0, 0), null);
             }
             else if (sender is "newlines")
             {
@@ -467,16 +468,17 @@ namespace GraphAnalysis.VM
 
                     if (Breakdown.BD.Y != 0)
                     {
-                        int ind = Candles.IndexOf(Candles.First(a => a.MaxPoint.X == Breakdown.BD.X));
+                        int ind = Direction is "Up" ? Candles.IndexOf(Candles.First(a => a.MaxPoint.X == Breakdown.BD.X))
+                                                    : Candles.IndexOf(Candles.First(a => a.MinPoint.X == Breakdown.BD.X));
 
-                        for (int n = ind; n < Candles.Count; n++)
+                        for (int n = ind + 1; n < Candles.Count; n++)
                         {
-                            if (Direction is "Up" && Candles[n].MaxPoint.Y <= Breakdown.BD.Y)
+                            if (Direction is "Up" && Candles[n].MaxPoint.Y < Breakdown.BD.Y)
                             {
                                 borderX = Candles[n].MaxPoint.X;
                                 break;
                             }
-                            if (Direction is "Dn" && Candles[n].MinPoint.Y >= Breakdown.BD.Y)
+                            if (Direction is "Dn" && Candles[n].MinPoint.Y > Breakdown.BD.Y)
                             {
                                 borderX = Candles[n].MinPoint.X;
                                 break;
@@ -561,9 +563,10 @@ namespace GraphAnalysis.VM
 
                 if (Candles[index].MaxPoint.X > Breakdown.BD.X)
                 {
-                    List<Candle> candleway = new();
-
-                    candleway.Add(Candles[index]);
+                    List<Candle> candleway = new()
+                    {
+                        Candles[index]
+                    };
 
                     for (int n = index - 1; n >= 0; n--)
                     {
@@ -1455,6 +1458,19 @@ namespace GraphAnalysis.VM
             else StatusMessage = "ВНИМАНИЕ: Зона 13/14 считается для одного пика";
         }
 
+        internal void SetTargetPeak(object sender, RoutedEventArgs e)
+        {
+            if (SelectedObject.Count == 1)
+            {
+                Peak peak = Peaks.First(a => a.Id == SelectedObject[0].Uid);
+
+                Breakdown.P = peak;
+
+                StatusMessage = "Выделенный пик выбран для расчета близости линий";
+            }
+            else StatusMessage = "ВНИМАНИЕ: необходимо выделить только один пик";
+        }
+
         internal void AddOrDeletePeakToSeriesPeaks(object sender, RoutedEventArgs e)
         {
             // Собираем пики по Uid TextBlock
@@ -1943,6 +1959,9 @@ namespace GraphAnalysis.VM
             MenuItem Zone1314MenuItem = new() { Header = "Zone 13/14" };
             Zone1314MenuItem.Click += Zone1314Method;
 
+            MenuItem SetTargetPeakMenuItem = new() { Header = "Set target peak" };
+            SetTargetPeakMenuItem.Click += SetTargetPeak;
+
             MenuItem AddOrDeletePeakToSeriesPeaksMenuItem = new() { Header = "Add/Delete Peak to SeriesPeaks" };
             AddOrDeletePeakToSeriesPeaksMenuItem.Click += AddOrDeletePeakToSeriesPeaks;
 
@@ -1962,6 +1981,7 @@ namespace GraphAnalysis.VM
             ContextMenu RightClickMenu = new();
 
             RightClickMenu.Items.Add(Zone1314MenuItem);
+            RightClickMenu.Items.Add(SetTargetPeakMenuItem);
             RightClickMenu.Items.Add(AddOrDeletePeakToSeriesPeaksMenuItem);
             RightClickMenu.Items.Add(SelectSeriesPeakMenuItem);
             RightClickMenu.Items.Add(SelectPointPeakOrSeriesPeaksMenuItem);

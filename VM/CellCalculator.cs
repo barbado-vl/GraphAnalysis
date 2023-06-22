@@ -79,6 +79,8 @@ namespace GraphAnalysis.VM
 
                             ProximityMethod(newtline, tlines, nL, startpoint);
 
+                            DynamicsPrevious(newtline, tlines, nL, startpoint); // Ошибка 29.06.22 
+
                             touchcells.Add(newtline);
                         }
                     }
@@ -270,6 +272,9 @@ namespace GraphAnalysis.VM
             {
                 for (int n = ind + 1; n < cells.Count; n++)
                 {
+                    if (cells[n].MainType == cell.MainType && (cells[n].PreviousProximity[1] == null))
+                        FirstLinePreviousProximity(1, cells[n], cells);
+
                     if (cells[n].MainType == cell.MainType && (cells[n].PreviousProximity[1].Contains('б') || cells[n].PreviousProximity[1].Contains('д')))
                     {
                         cell.PreviousProximity[1] = cells[n].PreviousProximity[1].Contains('б') ? "б" : "д";
@@ -281,6 +286,9 @@ namespace GraphAnalysis.VM
             {
                 for (int n = ind + 1; n < cells.Count; n++)
                 {
+                    if (cells[n].CommonType && (cells[n].PreviousProximity[2] == null))
+                        FirstLinePreviousProximity(2, cells[n], cells);
+
                     if (cells[n].CommonType && (cells[n].PreviousProximity[2].Contains('б') || cells[n].PreviousProximity[2].Contains('д')))
                     {
                         cell.PreviousProximity[2] = cells[n].PreviousProximity[2].Contains('б') ? "б" : "д";
@@ -293,6 +301,9 @@ namespace GraphAnalysis.VM
                 for (int n = ind + 1; n < cells.Count; n++)
                 {
                     double his = cells[n].HistoryType.Last().ToString() is "п" ? 2.5 : double.Parse(cells[n].HistoryType.Split("С").Last());
+
+                    if (his > 2 && (cells[n].PreviousProximity[3] == null))
+                        FirstLinePreviousProximity(3, cells[n], cells);
 
                     if (his > 2 && (cells[n].PreviousProximity[3].Contains('б') || cells[n].PreviousProximity[3].Contains('д')))
                     {

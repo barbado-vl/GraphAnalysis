@@ -36,6 +36,7 @@ namespace GraphAnalysis.VM
             minPoints = new();
         }
 
+
         internal List<TLine> CalculateTLines(List<Candle> basecandles)
         {
             List<TLine> tLines = new();

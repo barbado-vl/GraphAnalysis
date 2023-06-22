@@ -65,7 +65,7 @@ namespace GraphAnalysis.DataModel
                   || (inputdata[0] is "min" && inputdata[1] is "max"))
                 MainType = "Рэ";
 
-            HistoryType = inputdata.Length > 2 ? inputdata[2] : "";
+            HistoryType = inputdata.Length > 2 ? inputdata[2] : "С2";
             CommonType = false;
             VectorType = "";
 
